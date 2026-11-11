@@ -12,7 +12,7 @@ export async function loadConfig(directory = root) {
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   const addresses = Object.entries(networkInterfaces()).filter(([name]) => !name.startsWith('utun')).flatMap(([, list]) => list).filter(address => address.family === 'IPv4' && !address.internal);
   const address = addresses.find(item => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(item.address))?.address || addresses[0]?.address;
-  const config = { host: '0.0.0.0', port: 7810, cacheDir: join(homedir(), 'Movies', 'Stremio'), stateDir: join(directory, 'state'), maxCacheBytes: 100 * 2 ** 30, minFreeBytes: 10 * 2 ** 30, preventSleep: process.platform === 'darwin', autoDiscoverAddons: process.platform === 'darwin', addonRefreshMs: 60000, language: languageCode(Intl.DateTimeFormat().resolvedOptions().locale), sources: [], defaultTrackers: ['udp://tracker.opentrackr.org:1337/announce', 'udp://open.stealth.si:80/announce', 'udp://tracker.torrent.eu.org:451/announce'], ...saved };
+  const config = { host: '0.0.0.0', port: 7810, cacheDir: join(homedir(), 'Movies', 'Stremio'), stateDir: join(directory, 'state'), maxCacheBytes: 100 * 2 ** 30, minFreeBytes: 10 * 2 ** 30, prefetchEpisodes: 1, preventSleep: process.platform === 'darwin', autoDiscoverAddons: process.platform === 'darwin', addonRefreshMs: 60000, language: languageCode(Intl.DateTimeFormat().resolvedOptions().locale), sources: [], defaultTrackers: ['udp://tracker.opentrackr.org:1337/announce', 'udp://open.stealth.si:80/announce', 'udp://tracker.torrent.eu.org:451/announce'], ...saved };
   config.baseUrl ||= address ? `http://${address}:${config.port}` : '';
   config.token ||= randomBytes(24).toString('hex');
   config.language = languageCode(config.language);
@@ -26,6 +26,7 @@ export async function prepareConfig(directory = root, stateDirectory, values = {
   config.language = languageCode(config.language);
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) throw new Error('Use a port between 1 and 65535.');
   if (!Number.isSafeInteger(config.maxCacheBytes) || config.maxCacheBytes <= 0 || !Number.isSafeInteger(config.minFreeBytes) || config.minFreeBytes < 0) throw new Error('Use a positive cache budget and a nonnegative free-space reserve.');
+  if (!Number.isInteger(config.prefetchEpisodes) || config.prefetchEpisodes < 0 || config.prefetchEpisodes > 3) throw new Error('Use prefetchEpisodes from 0 to 3.');
   if (!/^https?:$/.test(new URL(config.baseUrl).protocol) || !/^[a-zA-Z0-9_-]{24,128}$/.test(config.token)) throw new Error('Use an HTTP(S) baseUrl and a private token with 24–128 letters, digits, underscores or hyphens.');
   config.baseUrl = config.baseUrl.replace(/\/+$/, '');
   await mkdir(config.stateDir, { recursive: true, mode: 0o700 });

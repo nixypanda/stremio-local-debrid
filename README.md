@@ -85,6 +85,10 @@ Direct video URLs, external services, subtitle-only addons and non-HTTP addon tr
 
 Listing sources does not start a video download. A `HEAD` request may retrieve torrent metadata but does not select the file for download. Playback selects only the requested file, including in season packs. Pieces shared with a neighbouring file can also be transferred. Closing the player does not cancel the download; incomplete downloads resume after a restart. Previously downloaded pieces are verified before reuse, which can add startup time.
 
+When a series episode finishes downloading, the server can prefetch numbered episodes ahead of the latest episode played. `prefetchEpisodes` defaults to `1`; set it to `0` to disable or up to `3` to cache more ahead. Prefetching proceeds one episode at a time and uses the episode IDs and order supplied by a compatible metadata addon. On macOS, account discovery includes metadata addons. For manual setups, set `metadataSource` to the metadata addon's HTTP manifest URL in `config.json`. If metadata, a suitable torrent, or cache space is unavailable, the server leaves that episode for normal playback. Season 0 specials are skipped. A playback request for another episode cancels an unfinished prefetch; completed cache entries remain until normal eviction.
+
+Episode prefetch currently recognizes IMDb style episode IDs such as `tt1234567:1:2`. Shows whose metadata addon uses other episode ID formats still play and cache normally, but do not prefetch.
+
 ## Cache and configuration
 
 Defaults are **100 GiB** of cached selected files and **10 GiB** of reserved free disk space. When space is needed, completed, least recently used torrents are removed first. Active readers and unfinished downloads are protected. Oversized files are rejected. If free space falls below the reserve, downloads stop; free space and select the source again to resume. BitTorrent piece boundaries, metadata and filesystem allocation mean physical disk use can differ slightly from the selected-file budget.
@@ -101,6 +105,8 @@ The generated `config.json` is private and ignored by Git. [config.json.example]
 | `maxCacheBytes`, `minFreeBytes` | Cache budget and free-space reserve in bytes |
 | `autoDiscoverAddons` | Read the Stremio 5 macOS account; default true on macOS |
 | `sources` | Manual addon objects with `name` and `manifestUrl` |
+| `metadataSource` | Optional HTTP metadata addon manifest URL for manual setups |
+| `prefetchEpisodes` | Number of series episodes ahead to download; `0` to `3`, default `1` |
 | `addonRefreshMs` | Account synchronization interval; default `60000` |
 | `language` | Default locale, such as `pt-BR` or `en-US` |
 | `defaultTrackers` | Optional fallback trackers for public torrents |

@@ -7,6 +7,8 @@
   "stateDir": "./state",
   "maxCacheBytes": 107374182400,
   "minFreeBytes": 10737418240,
+  "prefetchEpisodes": 1,
+  "metadataSource": "",
   "autoDiscoverAddons": false,
   "addonRefreshMs": 60000,
   "preventSleep": false,

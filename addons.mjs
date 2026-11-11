@@ -6,6 +6,8 @@ import { DatabaseSync } from 'node:sqlite';
 
 const selfId = 'local.stremio.cache';
 const streamResources = manifest => (manifest.resources || []).filter(resource => resource === 'stream' || resource?.name === 'stream').map(resource => typeof resource === 'string' ? { types: manifest.types, idPrefixes: manifest.idPrefixes } : resource);
+const metaResources = manifest => (manifest.resources || []).filter(resource => resource === 'meta' || resource?.name === 'meta').map(resource => typeof resource === 'string' ? { types: manifest.types, idPrefixes: manifest.idPrefixes } : resource);
+const compatible = (resources, source, type, id) => resources(source.manifest).some(resource => (!Array.isArray(resource.types) || resource.types.includes(type)) && (!Array.isArray(resource.idPrefixes) || resource.idPrefixes.some(prefix => id.startsWith(prefix))));
 
 export async function readStremioProfile(directory = join(homedir(), 'Library', 'WebKit', 'com.westbridge.stremio5-mac', 'WebsiteData', 'Default')) {
   let paths;
@@ -31,7 +33,7 @@ function sourcesFrom(addons, config) {
   return addons.flatMap(addon => {
     const manifest = addon.manifest || { name: addon.name, resources: ['stream'], types: ['movie', 'series', 'anime', 'other'] };
     const transportUrl = addon.transportUrl || addon.manifestUrl;
-    if (!transportUrl || manifest.id === selfId || !streamResources(manifest).length || seen.has(transportUrl)) return [];
+    if (!transportUrl || manifest.id === selfId || !streamResources(manifest).length && !metaResources(manifest).length || seen.has(transportUrl)) return [];
     try {
       const url = new URL(transportUrl);
       const local = new URL(config.baseUrl);
@@ -48,6 +50,7 @@ export async function createAddonSources(config, options = {}) {
   const request = options.fetch || fetch;
   const intervalMs = config.addonRefreshMs || 60000;
   const snapshotPath = join(config.stateDir, 'installed-addons.json');
+  const manualMeta = sourcesFrom(config.metadataSource ? [{ name: 'Metadata', manifestUrl: config.metadataSource, manifest: { name: 'Metadata', resources: ['meta'], types: ['series', 'anime'] } }] : [], config);
   let sources = sourcesFrom(config.sources || [], config);
   let mode = 'manual';
   let account = null;
@@ -109,11 +112,21 @@ export async function createAddonSources(config, options = {}) {
     refresh,
     async forRequest(type, id) {
       await refresh();
-      return sources.filter(source => streamResources(source.manifest).some(resource => (!Array.isArray(resource.types) || resource.types.includes(type)) && (!Array.isArray(resource.idPrefixes) || resource.idPrefixes.some(prefix => id.startsWith(prefix)))));
+      return sources.filter(source => compatible(streamResources, source, type, id));
     },
-    status: () => ({ mode, refreshedAt, refreshSeconds: intervalMs / 1000, sources: sources.map(source => ({ id: source.manifest.id, name: source.name, types: [...new Set(streamResources(source.manifest).flatMap(resource => resource.types || []))] })) }),
+    async forMeta(type, id) { await refresh(); return [...manualMeta, ...sources].filter(source => compatible(metaResources, source, type, id)); },
+    status: () => ({ mode, refreshedAt, refreshSeconds: intervalMs / 1000, sources: sources.map(source => ({ id: source.manifest.id, name: source.name, types: [...new Set([...streamResources(source.manifest), ...metaResources(source.manifest)].flatMap(resource => resource.types || []))] })) }),
     async close() { closed = true; clearInterval(timer); abort.abort(); await pending; }
   };
+}
+
+export async function fetchAddonMeta(source, type, id) {
+  const url = new URL(source.manifestUrl);
+  if (!/\/manifest\.json$/.test(url.pathname)) throw new Error('Unsupported metadata addon');
+  url.pathname = url.pathname.replace(/\/manifest\.json$/, `/meta/${encodeURIComponent(type)}/${encodeURIComponent(id)}.json`);
+  const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()).meta;
 }
 
 export async function fetchAddonStreams(source, type, id) {

@@ -7,8 +7,9 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import WebTorrent from 'webtorrent';
-import { createAddonSources, fetchAddonStreams } from './addons.mjs';
+import { createAddonSources, fetchAddonStreams, fetchAddonMeta } from './addons.mjs';
 import { torrentDescriptor } from './torrents.mjs';
+import { seriesId, followingEpisodes, meaningfulPlayback, evictionEligible } from './prefetch.mjs';
 import { locales, languageCode, translation } from './i18n.mjs';
 import { renderDashboard, renderGuide } from './ui.mjs';
 
@@ -28,6 +29,8 @@ export function byteRange(header, size) {
 }
 
 export async function createService(config, options = {}) {
+  const prefetchEpisodes = config.prefetchEpisodes === undefined ? 1 : config.prefetchEpisodes;
+  if (!Number.isInteger(prefetchEpisodes) || prefetchEpisodes < 0 || prefetchEpisodes > 3) throw new Error('prefetchEpisodes must be an integer from 0 to 3');
   const cacheDir = resolve(config.cacheDir);
   const stateDir = resolve(config.stateDir || join(root, 'state'));
   await mkdir(cacheDir, { recursive: true, mode: 0o700 });
@@ -37,6 +40,12 @@ export async function createService(config, options = {}) {
   client.on('error', error => console.error('BitTorrent:', error.message));
   const entries = new Map();
   const jobs = new Map();
+  let playback = null;
+  let playbackGeneration = 0;
+  let prefetchBusy = false;
+  let prefetchWake = false;
+  let prefetchRetryAt = 0;
+  let prefetchWindow = [];
   let saving = Promise.resolve();
   let closing = false;
   let maintenanceRunning = false;
@@ -58,12 +67,25 @@ export async function createService(config, options = {}) {
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
+  try {
+    const stored = JSON.parse(await readFile(join(stateDir, 'playback.json'), 'utf8'));
+    if (['series', 'anime'].includes(stored?.type) && typeof stored.id === 'string' && seriesId(stored.id)) playback = stored;
+  } catch (error) { if (error.code !== 'ENOENT') console.error('Prefetch state:', error.message); }
+  if (!prefetchEpisodes) playback = null;
   const persist = () => {
     const content = JSON.stringify([...jobs.values()], null, 2);
     saving = saving.then(async () => {
       await writeFile(join(stateDir, 'downloads.json.tmp'), content, { mode: 0o600 });
       await rename(join(stateDir, 'downloads.json.tmp'), join(stateDir, 'downloads.json'));
     }).catch(error => console.error('Estado:', error.message));
+    return saving;
+  };
+  const persistPlayback = () => {
+    const content = JSON.stringify(playback);
+    saving = saving.then(async () => {
+      await writeFile(join(stateDir, 'playback.json.tmp'), content, { mode: 0o600 });
+      await rename(join(stateDir, 'playback.json.tmp'), join(stateDir, 'playback.json'));
+    }).catch(error => console.error('Prefetch state:', error.message));
     return saving;
   };
   const sign = payload => createHmac('sha256', config.token).update(payload).digest('base64url');
@@ -81,10 +103,15 @@ export async function createService(config, options = {}) {
     if (!validHash.test(descriptor.infoHash) || (descriptor.fileIdx != null && (!Number.isInteger(descriptor.fileIdx) || descriptor.fileIdx < 0))) throw fault(400, 'invalidTorrent');
     return descriptor;
   };
-  const getEntry = async descriptor => {
+  const getEntry = async (descriptor, reserve = false) => {
     const hash = descriptor.infoHash.toLowerCase();
-    if (entries.has(hash)) return entries.get(hash).ready;
-    const entry = { infoHash: hash, selected: new Set(), readers: 0, lastAccess: Date.now(), torrent: null };
+    if (entries.has(hash)) {
+      const existing = entries.get(hash);
+      if (reserve) existing.pendingRequests++;
+      try { return await existing.ready; }
+      catch (error) { if (reserve) existing.pendingRequests--; throw error; }
+    }
+    const entry = { infoHash: hash, selected: new Set(), readers: 0, pendingRequests: reserve ? 1 : 0, lastAccess: Date.now(), torrent: null };
     entry.ready = (async () => {
       let torrentId;
       try { torrentId = await readFile(join(stateDir, 'torrents', `${hash}.torrent`)); }
@@ -119,18 +146,19 @@ export async function createService(config, options = {}) {
       throw error;
     });
     entries.set(hash, entry);
-    return entry.ready;
+    try { return await entry.ready; }
+    catch (error) { if (reserve) entry.pendingRequests--; throw error; }
   };
   const allocated = () => [...jobs.values()].reduce((total, job) => total + (job.length || 0), 0);
   const freeSpace = async () => { const disk = await statfs(cacheDir); return disk.bavail * disk.bsize; };
-  const evict = async (extraBytes, exclude) => {
+  const evict = async (extraBytes, exclude, mode = 'maintenance') => {
     let free = await freeSpace();
-    const candidates = [...new Set([...jobs.values()].filter(job => job.status === 'complete' && job.infoHash !== exclude).sort((a, b) => a.lastAccess - b.lastAccess).map(job => job.infoHash))];
+    const candidates = [...new Set([...jobs.values()].filter(job => job.status === 'complete' && job.infoHash !== exclude).sort((a, b) => mode === 'playback' ? Number(!!b.prefetch) - Number(!!a.prefetch) || a.lastAccess - b.lastAccess : a.lastAccess - b.lastAccess).map(job => job.infoHash))];
     for (const hash of candidates) {
       if (allocated() + extraBytes <= config.maxCacheBytes && free >= extraBytes + config.minFreeBytes) break;
       const related = [...jobs.values()].filter(job => job.infoHash === hash);
       const entry = entries.get(hash);
-      if (entry?.readers || (entry && Date.now() - entry.lastAccess < 60000) || related.some(job => job.status !== 'complete')) continue;
+      if (!evictionEligible(related, entry, playback, prefetchWindow, mode)) continue;
       if (entry?.torrent && !entry.torrent.destroyed) await new Promise(done => client.remove(entry.torrent, { destroyStore: false }, () => done()));
       entries.delete(hash);
       await rm(join(cacheDir, hash), { recursive: true, force: true });
@@ -141,9 +169,10 @@ export async function createService(config, options = {}) {
     if (allocated() + extraBytes > config.maxCacheBytes || free < extraBytes + config.minFreeBytes) throw fault(507, 'cacheFull');
   };
   let selection = Promise.resolve();
-  const selectFile = async (descriptor, download) => {
-    const entry = await getEntry(descriptor);
+  const selectFile = async (descriptor, download, isPrefetch = false, generation, promote = false, reserve = false) => {
+    const entry = await getEntry(descriptor, reserve);
     const operation = selection.then(async () => {
+      if (isPrefetch && (generation !== playbackGeneration || closing)) throw new Error('stalePrefetch');
       entry.lastAccess = Date.now();
       const torrent = entry.torrent;
       const file = descriptor.fileIdx == null
@@ -154,9 +183,26 @@ export async function createService(config, options = {}) {
       if (download) {
         const key = `${entry.infoHash}:${fileIdx}`;
         const existing = jobs.get(key);
-        if (!existing) await evict(file.length, entry.infoHash);
+        if (!existing) {
+          try { await evict(file.length, entry.infoHash, isPrefetch ? 'prefetch' : 'playback'); }
+          catch (error) {
+            if (isPrefetch || error.status !== 507) throw error;
+            let paused = false;
+            for (const [prefetchKey, job] of jobs) {
+              if (!job.prefetch || job.status === 'complete' || prefetchKey === key) continue;
+              const active = entries.get(job.infoHash);
+              if (active?.selected.has(job.fileIdx)) { active.torrent?.files[job.fileIdx]?.deselect(); active.selected.delete(job.fileIdx); }
+              jobs.delete(prefetchKey);
+              paused = true;
+            }
+            if (!paused) throw error;
+            await persist();
+            updateSleep();
+            await evict(file.length, entry.infoHash, 'playback');
+          }
+        }
         else if (!file.done && await freeSpace() < config.minFreeBytes) throw fault(507, 'noDisk');
-        const job = { ...existing, ...descriptor, infoHash: entry.infoHash, fileIdx, filename: file.name, path: join(cacheDir, entry.infoHash, file.path), length: file.length, lastAccess: Date.now(), error: undefined, status: file.done ? 'complete' : 'downloading' };
+        const job = { ...existing, ...descriptor, infoHash: entry.infoHash, fileIdx, filename: file.name, path: join(cacheDir, entry.infoHash, file.path), length: file.length, lastAccess: Date.now(), error: undefined, status: file.done ? 'complete' : 'downloading', prefetch: isPrefetch || !promote && !!existing?.prefetch };
         jobs.set(key, job);
         if (!entry.selected.has(fileIdx)) { file.select(); entry.selected.add(fileIdx); }
         updateSleep();
@@ -165,20 +211,27 @@ export async function createService(config, options = {}) {
       return { entry, file };
     });
     selection = operation.catch(() => {});
-    return operation;
+    let handedToResponse = false;
+    try {
+      const result = await operation;
+      handedToResponse = true;
+      return result;
+    } finally {
+      if (reserve && !handedToResponse) entry.pendingRequests--;
+    }
   };
   const listDownloads = () => [...jobs.values()].map(job => {
     const entry = entries.get(job.infoHash);
     const file = entry?.torrent?.files[job.fileIdx];
     const downloaded = file?.done || job.status === 'complete' ? job.length : Math.max(0, file?.downloaded || 0);
-    return { filename: job.filename, status: file?.done ? 'complete' : job.status, bytes: job.length, downloaded, progress: job.length ? downloaded / job.length : 0, peers: entry?.torrent?.numPeers || 0, speed: entry?.torrent?.downloadSpeed || 0, path: job.path, error: job.error };
+    return { filename: job.filename, status: file?.done ? 'complete' : job.status, prefetch: !!job.prefetch, bytes: job.length, downloaded, progress: job.length ? downloaded / job.length : 0, peers: entry?.torrent?.numPeers || 0, speed: entry?.torrent?.downloadSpeed || 0, path: job.path, error: job.error };
   });
   const defaults = translation(config.language);
   const manifest = { id: 'local.stremio.cache', version: '1.2.0', name: defaults.name, description: defaults.description, logo: `${config.baseUrl}/${config.token}/assets/logo.png`, resources: ['stream'], types: ['movie', 'series', 'anime', 'other'], catalogs: [], behaviorHints: { configurable: true, p2p: true } };
   const getStreams = async (type, id, language = config.language) => {
     const t = translation(language);
     const stored = [...jobs.values()].filter(job => job.type === type && job.id === id && job.status === 'complete').map(job => {
-      const descriptor = { infoHash: job.infoHash, fileIdx: job.fileIdx, sources: job.sources, webSeeds: job.webSeeds, private: job.private, filename: job.filename, type, id };
+      const descriptor = { infoHash: job.infoHash, fileIdx: job.fileIdx, sources: job.sources, webSeeds: job.webSeeds, private: job.private, filename: job.filename, sourceId: job.sourceId, type, id };
       return { name: `${t.name} ✓\n${t.cached}`, description: job.filename, url: playURL(descriptor), behaviorHints: { notWebReady: true, filename: job.filename, videoSize: job.length, bingeGroup: 'cache-local-stored' } };
     });
     const sources = await addonSources.forRequest(type, id);
@@ -187,7 +240,7 @@ export async function createService(config, options = {}) {
       const converted = await Promise.all(data.map(async stream => {
         const torrent = await torrentDescriptor(stream, stateDir);
         if (!torrent) return null;
-        const descriptor = { ...torrent, type, id };
+        const descriptor = { ...torrent, type, id, sourceId: source.manifest.id || source.name };
         const cached = [...jobs.values()].some(job => job.infoHash === descriptor.infoHash && (descriptor.fileIdx == null || descriptor.fileIdx === job.fileIdx) && job.status === 'complete');
         return { name: `${t.name} ${cached ? '✓' : '↓'}\n${stream.name || source.name}`, description: stream.description || stream.title || source.name, url: playURL(descriptor), subtitles: stream.subtitles, behaviorHints: { notWebReady: true, filename: descriptor.filename, videoHash: stream.behaviorHints?.videoHash, videoSize: stream.behaviorHints?.videoSize, bingeGroup: `cache-local-${stream.behaviorHints?.bingeGroup || source.name}` } };
       }));
@@ -209,6 +262,108 @@ export async function createService(config, options = {}) {
       }
     }
     return { streams, cacheMaxAge: 30, staleRevalidate: 0, staleError: 0 };
+  };
+  const cancelObsoletePrefetch = async current => {
+    const operation = selection.then(async () => {
+      let changed = false;
+      for (const [key, job] of jobs) {
+        if (!job.prefetch || job.status === 'complete' || job.type === current.type && job.id === current.id) continue;
+        const entry = entries.get(job.infoHash);
+        const file = entry?.torrent?.files[job.fileIdx];
+        if (file?.done) { job.status = 'complete'; changed = true; continue; }
+        if (entry?.selected.has(job.fileIdx)) { file?.deselect(); entry.selected.delete(job.fileIdx); }
+        jobs.delete(key);
+        changed = true;
+      }
+      if (changed) await persist();
+      updateSleep();
+    });
+    selection = operation.catch(() => {});
+    return operation;
+  };
+  const recordPlayback = async descriptor => {
+    if (!prefetchEpisodes) return;
+    if (!['series', 'anime'].includes(descriptor.type) || !seriesId(descriptor.id)) {
+      if (playback) {
+        playback = null;
+        playbackGeneration++;
+        prefetchWindow = [];
+        await cancelObsoletePrefetch({ type: null, id: null });
+        await persistPlayback();
+      }
+      return;
+    }
+    if (playback?.type !== descriptor.type || playback.id !== descriptor.id) {
+      const metadataSource = playback?.type === descriptor.type && seriesId(playback.id) === seriesId(descriptor.id) ? playback.metadataSource : undefined;
+      playback = { type: descriptor.type, id: descriptor.id, infoHash: descriptor.infoHash, sourceId: descriptor.sourceId, metadataSource };
+      playbackGeneration++;
+      prefetchWindow = [];
+      prefetchRetryAt = 0;
+      await cancelObsoletePrefetch(playback);
+      await persistPlayback();
+    }
+  };
+  const runPrefetch = async () => {
+    if (prefetchBusy) { prefetchWake = true; return; }
+    if (!prefetchEpisodes || !playback || closing || Date.now() < prefetchRetryAt) return;
+    prefetchBusy = true;
+    prefetchRetryAt = Infinity;
+    const generation = playbackGeneration;
+    const current = playback;
+    try {
+      if (![...jobs.values()].some(job => job.type === current.type && job.id === current.id && job.status === 'complete')) { prefetchRetryAt = Date.now() + 60000; return; }
+      const showId = seriesId(current.id);
+      const metadataSources = (await addonSources.forMeta(current.type, showId)).filter(source => !current.metadataSource || source.manifestUrl === current.metadataSource);
+      let nextIds = [];
+      let resolved = false;
+      for (const source of metadataSources) {
+        try {
+          const meta = await fetchAddonMeta(source, current.type, showId);
+          if (meta?.id && meta.id !== showId) continue;
+          if (!meta?.videos?.some(video => video.id === current.id)) continue;
+          if (!current.metadataSource) { current.metadataSource = source.manifestUrl; await persistPlayback(); }
+          nextIds = followingEpisodes(meta, current.id, prefetchEpisodes);
+          resolved = true;
+          break;
+        } catch (error) { console.error('Prefetch metadata:', error.message); }
+      }
+      if (generation !== playbackGeneration) return;
+      if (resolved) prefetchWindow = nextIds;
+      if (!nextIds.length) { prefetchRetryAt = Date.now() + 60000; return; }
+      for (const nextId of nextIds) {
+        if (generation !== playbackGeneration) return;
+        const existing = [...jobs.values()].find(job => job.type === current.type && job.id === nextId && job.status !== 'error');
+        if (existing?.status === 'complete') continue;
+        if (existing?.status === 'downloading') { prefetchRetryAt = Date.now() + 60000; return; }
+        const response = await getStreams(current.type, nextId);
+        if (generation !== playbackGeneration) return;
+        const candidates = response.streams.map(stream => {
+          try { return decode(stream.url.split('/play/')[1].split('/')[0]); } catch { return null; }
+        }).filter(Boolean).sort((a, b) => Number(b.infoHash === current.infoHash) - Number(a.infoHash === current.infoHash) || Number(b.sourceId === current.sourceId) - Number(a.sourceId === current.sourceId));
+        let selected = false;
+        for (const descriptor of candidates) {
+          if (generation !== playbackGeneration || closing) return;
+          try {
+            if (descriptor.fileIdx == null) {
+              const entry = await getEntry(descriptor);
+              const videos = entry.torrent.files.filter(file => videoExtension.test(file.name) && !/\bsample\b/i.test(file.name));
+              if (videos.length !== 1) continue;
+              descriptor.fileIdx = entry.torrent.files.indexOf(videos[0]);
+            }
+            if (generation !== playbackGeneration || closing) return;
+            descriptor.prefetchParentId = current.id;
+            await selectFile(descriptor, true, true, generation);
+            selected = true;
+            break;
+          } catch (error) { if (error.message === 'stalePrefetch') return; console.error('Prefetch source:', error.message); }
+        }
+        if (!selected) { prefetchRetryAt = Date.now() + 60000; return; }
+        const job = [...jobs.values()].find(item => item.type === current.type && item.id === nextId && item.status !== 'error');
+        if (job?.status !== 'complete') { prefetchRetryAt = Date.now() + 60000; return; }
+      }
+      prefetchRetryAt = Date.now() + 60000;
+    } catch (error) { console.error('Prefetch:', error.message); prefetchRetryAt = Date.now() + 60000; }
+    finally { prefetchBusy = false; if (prefetchWake) { prefetchWake = false; prefetchRetryAt = 0; queueMicrotask(() => void runPrefetch()); } }
   };
   const json = (res, status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
   const server = http.createServer(async (req, res) => {
@@ -238,12 +393,21 @@ export async function createService(config, options = {}) {
       }
       if (path[1] === 'play' && path[2]) {
         const descriptor = decode(path[2]);
-        const { entry, file } = await selectFile(descriptor, false);
+        const { entry, file } = await selectFile(descriptor, false, false, undefined, false, true);
+        let reserved = true;
+        const releaseReservation = () => { if (reserved) { reserved = false; entry.pendingRequests--; } };
+        res.once('close', releaseReservation);
+        if (res.destroyed) { releaseReservation(); return; }
         let range;
         try { range = byteRange(req.headers.range, file.length); }
         catch (error) { res.setHeader('Content-Range', `bytes */${file.length}`); throw error; }
         if (res.destroyed) return;
-        if (req.method === 'GET') await selectFile(descriptor, true);
+        if (req.method === 'GET') {
+          const meaningful = meaningfulPlayback(req.method, range, file.length);
+          if (meaningful) await recordPlayback(descriptor);
+          await selectFile(descriptor, true, false, undefined, meaningful);
+          if (meaningful) void runPrefetch();
+        }
         res.setHeader('Content-Type', file.type);
         res.setHeader('Accept-Ranges', 'bytes');
         res.setHeader('Content-Length', range.end - range.start + 1);
@@ -294,12 +458,13 @@ export async function createService(config, options = {}) {
           if (job && file.done && job.status !== 'complete') { job.status = 'complete'; delete job.error; changed = true; }
         }
         const complete = [...entry.selected].every(index => entry.torrent.files[index].done);
-        if (!entry.readers && complete && Date.now() - entry.lastAccess > (config.idleReleaseMs || 60000)) {
+        if (!entry.readers && !entry.pendingRequests && complete && Date.now() - entry.lastAccess > (config.idleReleaseMs || 60000)) {
           await new Promise(done => client.remove(entry.torrent, { destroyStore: false }, () => done()));
           entries.delete(hash);
         }
       }
-      if (changed) await persist();
+      if (changed) { await persist(); prefetchRetryAt = 0; if (prefetchBusy) prefetchWake = true; }
+      if (changed || playback && Date.now() >= prefetchRetryAt) void runPrefetch();
       if (await freeSpace() < config.minFreeBytes) {
         try { await evict(0); }
         catch {
@@ -318,9 +483,19 @@ export async function createService(config, options = {}) {
   timer.unref();
   await new Promise((done, reject) => { server.once('error', reject); server.listen(config.port, config.host, done); });
   if (config.port === 0) config.baseUrl = `http://${config.host}:${server.address().port}`;
-  for (const job of jobs.values()) {
-    if (job.status === 'downloading') void selectFile(job, true).catch(error => { job.status = 'error'; job.error = error.message; void persist(); });
+  let removedStale = false;
+  for (const [key, job] of jobs) {
+    if (job.prefetch && (!prefetchEpisodes || !playback || job.prefetchParentId !== playback.id)) {
+      if (job.status === 'complete') job.prefetch = false;
+      else jobs.delete(key);
+      removedStale = true;
+    }
   }
+  if (removedStale) await persist();
+  for (const job of jobs.values()) {
+    if (job.status === 'downloading') void selectFile(job, true, !!job.prefetch, playbackGeneration).catch(error => { job.status = 'error'; job.error = error.message; void persist(); });
+  }
+  void runPrefetch();
   return { server, client, manifest, playURL, getStreams, listDownloads, maintenance, addonSources, async close() {
     closing = true;
     updateSleep();
