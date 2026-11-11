@@ -1,7 +1,8 @@
 import http from 'node:http';
+import { constants } from 'node:fs';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { mkdir, readFile, writeFile, rename, rm, statfs } from 'node:fs/promises';
-import { resolve, join, sep } from 'node:path';
+import { mkdir, open, readFile, writeFile, rename, rm, statfs, realpath } from 'node:fs/promises';
+import { resolve, join, sep, basename, extname } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +17,24 @@ import { renderDashboard, renderGuide } from './ui.mjs';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const validHash = /^[a-f0-9]{40}$/i;
 const videoExtension = /\.(mkv|mp4|m4v|avi|webm|mov|ts|m2ts)$/i;
+const fallbackTypes = {
+  '.mkv': 'video/x-matroska',
+  '.mp4': 'video/mp4',
+  '.m4v': 'video/x-m4v',
+  '.avi': 'video/x-msvideo',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
+  '.ts': 'video/mp2t',
+  '.m2ts': 'video/mp2t',
+  '.vtt': 'text/vtt',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.mp3': 'audio/mpeg',
+  '.zip': 'application/zip',
+};
+const contentType = filename => fallbackTypes[extname(filename || '').toLowerCase()] || 'application/octet-stream';
+const descendant = (root, target) => target.startsWith(root.endsWith(sep) ? root : root + sep);
 const fault = (status, message) => Object.assign(new Error(message), { status });
 
 export function byteRange(header, size) {
@@ -26,6 +45,23 @@ export function byteRange(header, size) {
   const end = match[1] && match[2] ? Math.min(size - 1, Number(match[2])) : size - 1;
   if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start >= size || end < start) throw fault(416, 'invalidRange');
   return { start, end, status: 206 };
+}
+
+async function streamRange(res, reader, start, end) {
+  const stop = () => reader.destroy();
+  res.once('close', stop);
+  try {
+    await pipeline(Readable.from((async function* () {
+      let remaining = end - start + 1;
+      for await (const chunk of reader) {
+        const part = chunk.subarray(0, remaining);
+        remaining -= part.length;
+        yield part;
+        if (!remaining) break;
+      }
+    })()), res);
+  } catch (error) { if (!res.destroyed) throw error; }
+  finally { res.off('close', stop); reader.destroy(); }
 }
 
 export async function createService(config, options = {}) {
@@ -40,6 +76,11 @@ export async function createService(config, options = {}) {
   client.on('error', error => console.error('BitTorrent:', error.message));
   const entries = new Map();
   const jobs = new Map();
+  // A direct read does not have a WebTorrent entry, but it still protects the
+  // cached torrent directory from eviction until the response has finished.
+  const directViews = new Map();
+  const evictions = new Map();
+  const watchedFiles = new WeakSet();
   let playback = null;
   let playbackGeneration = 0;
   let prefetchBusy = false;
@@ -52,7 +93,9 @@ export async function createService(config, options = {}) {
   let awake = null;
   const updateSleep = () => {
     if (process.platform !== 'darwin' || !config.preventSleep) return;
-    const active = !closing && [...entries.values()].some(entry => entry.readers || Date.now() - entry.lastAccess < 60000 || [...entry.selected].some(index => !entry.torrent?.files[index]?.done));
+    const now = Date.now();
+    const active = !closing && ([...entries.values()].some(entry => entry.readers || now - entry.lastAccess < 60000 || [...entry.selected].some(index => !entry.torrent?.files[index]?.done))
+      || [...directViews.values()].some(view => view.readers || now - view.lastAccess < 60000));
     if (active && !awake) {
       const child = spawn('/usr/bin/caffeinate', ['-i', '-w', String(process.pid)], { stdio: 'ignore' });
       awake = child;
@@ -151,6 +194,23 @@ export async function createService(config, options = {}) {
   };
   const allocated = () => [...jobs.values()].reduce((total, job) => total + (job.length || 0), 0);
   const freeSpace = async () => { const disk = await statfs(cacheDir); return disk.bavail * disk.bsize; };
+  const directView = hash => {
+    let view = directViews.get(hash);
+    if (!view) { view = { readers: 0, lastAccess: 0 }; directViews.set(hash, view); }
+    return view;
+  };
+  const reserveDirect = hash => { const view = directView(hash); view.readers++; view.lastAccess = Date.now(); updateSleep(); };
+  const releaseDirect = hash => { const view = directViews.get(hash); if (!view) return; view.readers = Math.max(0, view.readers - 1); view.lastAccess = Date.now(); updateSleep(); };
+  const evictionState = hash => {
+    const entry = entries.get(hash);
+    const direct = directViews.get(hash);
+    if (!entry && !direct?.readers) return undefined;
+    return {
+      readers: (entry?.readers || 0) + (direct?.readers || 0),
+      pendingRequests: entry?.pendingRequests || 0,
+      lastAccess: entry?.lastAccess || 0,
+    };
+  };
   const evict = async (extraBytes, exclude, mode = 'maintenance') => {
     let free = await freeSpace();
     const candidates = [...new Set([...jobs.values()].filter(job => job.status === 'complete' && job.infoHash !== exclude).sort((a, b) => mode === 'playback' ? Number(!!b.prefetch) - Number(!!a.prefetch) || a.lastAccess - b.lastAccess : a.lastAccess - b.lastAccess).map(job => job.infoHash))];
@@ -158,13 +218,36 @@ export async function createService(config, options = {}) {
       if (allocated() + extraBytes <= config.maxCacheBytes && free >= extraBytes + config.minFreeBytes) break;
       const related = [...jobs.values()].filter(job => job.infoHash === hash);
       const entry = entries.get(hash);
-      if (!evictionEligible(related, entry, playback, prefetchWindow, mode)) continue;
-      if (entry?.torrent && !entry.torrent.destroyed) await new Promise(done => client.remove(entry.torrent, { destroyStore: false }, () => done()));
-      entries.delete(hash);
-      await rm(join(cacheDir, hash), { recursive: true, force: true });
-      for (const job of related) jobs.delete(`${hash}:${job.fileIdx}`);
-      free = await freeSpace();
-      await persist();
+      const direct = directViews.get(hash);
+      if (evictions.has(hash) || direct?.readers) continue;
+      if (!evictionEligible(related, evictionState(hash), playback, prefetchWindow, mode)) continue;
+      if (entry?.torrent && !entry.torrent.destroyed) {
+        try {
+          await new Promise((done, reject) => client.remove(entry.torrent, { destroyStore: false }, error => error ? reject(error) : done()));
+        } catch {
+          if (entry.torrent.destroyed) entries.delete(hash);
+          continue;
+        }
+        // Removing a torrent can take a while. A direct reader may have opened
+        // the cached file during that wait, so abort the delete if it did.
+        if (directViews.get(hash)?.readers) { entries.delete(hash); continue; }
+      }
+      let finish;
+      const pending = new Promise(done => { finish = done; });
+      evictions.set(hash, pending);
+      try {
+        // Close the direct-reader admission gate before unlinking. Any direct
+        // request that arrives from now on waits for this eviction to finish.
+        if (directViews.get(hash)?.readers) { entries.delete(hash); continue; }
+        entries.delete(hash);
+        await rm(join(cacheDir, hash), { recursive: true, force: true });
+        for (const job of related) jobs.delete(`${hash}:${job.fileIdx}`);
+        free = await freeSpace();
+        await persist();
+      } finally {
+        evictions.delete(hash);
+        finish();
+      }
     }
     if (allocated() + extraBytes > config.maxCacheBytes || free < extraBytes + config.minFreeBytes) throw fault(507, 'cacheFull');
   };
@@ -202,9 +285,22 @@ export async function createService(config, options = {}) {
           }
         }
         else if (!file.done && await freeSpace() < config.minFreeBytes) throw fault(507, 'noDisk');
-        const job = { ...existing, ...descriptor, infoHash: entry.infoHash, fileIdx, filename: file.name, path: join(cacheDir, entry.infoHash, file.path), length: file.length, lastAccess: Date.now(), error: undefined, status: file.done ? 'complete' : 'downloading', prefetch: isPrefetch || !promote && !!existing?.prefetch };
+        const job = { ...existing, ...descriptor, infoHash: entry.infoHash, fileIdx, filename: file.name, mimeType: file.type, path: join(cacheDir, entry.infoHash, file.path), length: file.length, lastAccess: Date.now(), error: undefined, status: file.done ? 'complete' : 'downloading', prefetch: isPrefetch || !promote && !!existing?.prefetch };
         jobs.set(key, job);
         if (!entry.selected.has(fileIdx)) { file.select(); entry.selected.add(fileIdx); }
+        if (!file.done && typeof file.once === 'function' && !watchedFiles.has(file)) {
+          watchedFiles.add(file);
+          file.once('done', () => {
+            const current = jobs.get(key);
+            if (!current || current.status === 'complete') return;
+            current.status = 'complete';
+            delete current.error;
+            prefetchRetryAt = 0;
+            if (prefetchBusy) prefetchWake = true;
+            updateSleep();
+            void persist();
+          });
+        }
         updateSleep();
         await persist();
       }
@@ -218,6 +314,45 @@ export async function createService(config, options = {}) {
       return result;
     } finally {
       if (reserve && !handedToResponse) entry.pendingRequests--;
+    }
+  };
+  const cachedJob = (descriptor, hash) => {
+    if (descriptor.fileIdx == null) return null;
+    const matches = [...jobs.values()].filter(job => job.infoHash?.toLowerCase() === hash && job.fileIdx === descriptor.fileIdx);
+    return matches.length === 1 ? matches[0] : null;
+  };
+  const openCached = async (job, hash) => {
+    if (!job || job.status !== 'complete' || job.infoHash?.toLowerCase() !== hash) return null;
+    if (!Number.isInteger(job.fileIdx) || job.fileIdx < 0 || !Number.isSafeInteger(job.length) || job.length <= 0 || typeof job.path !== 'string') return null;
+    const torrentRoot = join(cacheDir, hash);
+    const absolute = resolve(job.path);
+    if (!descendant(torrentRoot, absolute)) return null;
+    let handle;
+    try {
+      const [realCache, realRoot, realFile] = await Promise.all([realpath(cacheDir), realpath(torrentRoot), realpath(absolute)]);
+      if (!descendant(realCache, realRoot) || !descendant(realRoot, realFile)) return null;
+      handle = await open(realFile, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+      const info = await handle.stat();
+      if (!info.isFile() || info.size !== job.length) { await handle.close(); return null; }
+      const filename = job.filename || basename(realFile);
+      return { job, handle, filename, type: typeof job.mimeType === 'string' ? job.mimeType : contentType(filename) };
+    } catch {
+      if (handle) await handle.close().catch(() => {});
+      return null;
+    }
+  };
+  const claimCached = async (descriptor, hash) => {
+    if (descriptor.fileIdx == null) return null;
+    for (;;) {
+      const pending = evictions.get(hash);
+      if (pending) { await pending; continue; }
+      const job = cachedJob(descriptor, hash);
+      if (!job) return null;
+      reserveDirect(hash);
+      if (evictions.has(hash)) { releaseDirect(hash); continue; }
+      const opened = await openCached(job, hash).catch(() => null);
+      if (!opened) { releaseDirect(hash); return null; }
+      return opened;
     }
   };
   const listDownloads = () => [...jobs.values()].map(job => {
@@ -393,6 +528,44 @@ export async function createService(config, options = {}) {
       }
       if (path[1] === 'play' && path[2]) {
         const descriptor = decode(path[2]);
+        const hash = descriptor.infoHash.toLowerCase();
+        const opened = await claimCached(descriptor, hash);
+        if (opened) {
+          const { job, handle, filename, type } = opened;
+          try {
+            let range;
+            try { range = byteRange(req.headers.range, job.length); }
+            catch (error) { res.setHeader('Content-Range', `bytes */${job.length}`); throw error; }
+            if (res.destroyed) return;
+            if (req.method === 'GET') {
+              const meaningful = meaningfulPlayback(req.method, range, job.length);
+              if (meaningful) await recordPlayback(descriptor);
+              job.lastAccess = Date.now();
+              job.status = 'complete';
+              job.filename = filename;
+              job.mimeType = type;
+              delete job.error;
+              if (meaningful) job.prefetch = false;
+              await persist();
+              updateSleep();
+              if (meaningful) void runPrefetch();
+            }
+            res.setHeader('Content-Type', type);
+            res.setHeader('Accept-Ranges', 'bytes');
+            res.setHeader('Content-Length', range.end - range.start + 1);
+            res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(filename)}`);
+            res.setHeader('Cache-Control', 'private, max-age=0');
+            if (range.status === 206) res.setHeader('Content-Range', `bytes ${range.start}-${range.end}/${job.length}`);
+            res.writeHead(range.status);
+            if (req.method === 'HEAD') { res.end(); return; }
+            await streamRange(res, handle.createReadStream({ start: range.start, end: range.end, autoClose: false }), range.start, range.end);
+            job.lastAccess = Date.now();
+            return;
+          } finally {
+            await handle.close().catch(() => {});
+            releaseDirect(hash);
+          }
+        }
         const { entry, file } = await selectFile(descriptor, false, false, undefined, false, true);
         let reserved = true;
         const releaseReservation = () => { if (reserved) { reserved = false; entry.pendingRequests--; } };
@@ -417,21 +590,8 @@ export async function createService(config, options = {}) {
         res.writeHead(range.status);
         if (req.method === 'HEAD') { res.end(); return; }
         entry.readers++;
-        const reader = file.createReadStream({ start: range.start, end: range.end });
-        const stop = () => reader.destroy();
-        res.once('close', stop);
-        try {
-          await pipeline(Readable.from((async function* () {
-            let remaining = range.end - range.start + 1;
-            for await (const chunk of reader) {
-              const part = chunk.subarray(0, remaining);
-              remaining -= part.length;
-              yield part;
-              if (!remaining) break;
-            }
-          })()), res);
-        } catch (error) { if (!res.destroyed) throw error; }
-        finally { res.off('close', stop); reader.destroy(); entry.readers--; entry.lastAccess = Date.now(); }
+        try { await streamRange(res, file.createReadStream({ start: range.start, end: range.end }), range.start, range.end); }
+        finally { entry.readers--; entry.lastAccess = Date.now(); }
         return;
       }
       if (path.length === 1 || path[1] === 'configure' || path[1] === 'guide') {
@@ -458,11 +618,14 @@ export async function createService(config, options = {}) {
           if (job && file.done && job.status !== 'complete') { job.status = 'complete'; delete job.error; changed = true; }
         }
         const complete = [...entry.selected].every(index => entry.torrent.files[index].done);
-        if (!entry.readers && !entry.pendingRequests && complete && Date.now() - entry.lastAccess > (config.idleReleaseMs || 60000)) {
+        const direct = directViews.get(hash);
+        const idleFor = config.idleReleaseMs || 60000;
+        if (!entry.readers && !entry.pendingRequests && !direct?.readers && complete && Date.now() - Math.max(entry.lastAccess || 0, direct?.lastAccess || 0) > idleFor) {
           await new Promise(done => client.remove(entry.torrent, { destroyStore: false }, () => done()));
           entries.delete(hash);
         }
       }
+      for (const [hash, view] of directViews) if (!view.readers && Date.now() - view.lastAccess > (config.idleReleaseMs || 60000)) directViews.delete(hash);
       if (changed) { await persist(); prefetchRetryAt = 0; if (prefetchBusy) prefetchWake = true; }
       if (changed || playback && Date.now() >= prefetchRetryAt) void runPrefetch();
       if (await freeSpace() < config.minFreeBytes) {
