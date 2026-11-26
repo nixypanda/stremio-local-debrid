@@ -9,3 +9,5 @@ cache/
 *.torrent
 *.mp4
 *.mkv
+result
+result-*

@@ -39,6 +39,9 @@ The public installation portal helps you select a language and format your priva
 
 ## Automatic startup
 
+**Nix/NixOS:** this repository provides a flake package and a hardened NixOS
+service module. See [Nix setup](docs/NIX.md) for installation and dotfiles migration.
+
 The same installer supports all three operating systems. Startup occurs when the installing user **logs in**.
 
 | System | Startup mechanism | Runtime directory | Check status |
@@ -94,6 +97,9 @@ Episode prefetch currently recognizes IMDb style episode IDs such as `tt1234567:
 Defaults are **100 GiB** of cached selected files and **10 GiB** of reserved free disk space. When space is needed, completed, least recently used torrents are removed first. Active readers and unfinished downloads are protected. Oversized files are rejected. If free space falls below the reserve, downloads stop; free space and select the source again to resume. BitTorrent piece boundaries, metadata and filesystem allocation mean physical disk use can differ slightly from the selected-file budget.
 
 The generated `config.json` is private and ignored by Git. [config.json.example](config.json.example) is the public reference, with empty credentials and no configured providers. The setup wizard generates your configuration directly; copying the example is optional.
+
+For a supervised or immutable installation, set `STREMIO_LOCAL_DEBRID_CONFIG`
+to an external JSON configuration file and use absolute state/cache paths.
 
 | Setting | Purpose |
 | --- | --- |
