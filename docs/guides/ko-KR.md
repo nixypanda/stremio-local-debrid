@@ -12,11 +12,11 @@
 
 ## 요구 사항
 
-Node.js 24 이상, 충분한 디스크 공간, 같은 연결 가능한 네트워크의 컴퓨터와 TV가 필요합니다. 계정 자동 검색은 macOS의 Stremio 5를 지원합니다. Linux와 Windows는 애드온 목록을 수동으로 지정합니다. Android TV, Google TV, Fire TV가 주 대상입니다. 다른 클라이언트에는 HTTPS와 호환 코덱이 필요할 수 있습니다.
+Node.js 24 이상, 충분한 디스크 공간, 같은 연결 가능한 네트워크의 컴퓨터와 TV가 필요합니다. 계정 자동 검색은 macOS의 Stremio 5를 지원합니다. Linux는 애드온 목록을 수동으로 지정합니다. Android TV, Google TV, Fire TV가 주 대상입니다. 다른 클라이언트에는 HTTPS와 호환 코덱이 필요할 수 있습니다.
 
 ## 서버 설정
 
-npm run setup을 실행하면 config.json을 생성하고 macOS, Linux 또는 Windows에서 시작을 설정합니다. macOS에서는 TV 계정으로 Stremio 5에 로그인하고, Linux/Windows에서는 마법사에 애드온 URL을 입력하세요. --yes는 기본값을 적용하고, --no-service는 설정만 저장하며, --lang은 언어를 선택합니다. 기존 토큰과 다운로드는 유지됩니다.
+npm run setup을 실행하면 config.json을 생성하고 macOS, Linux에서 시작을 설정합니다. macOS에서는 TV 계정으로 Stremio 5에 로그인하고, Linux에서는 마법사에 애드온 URL을 입력하세요. --yes는 기본값을 적용하고, --no-service는 설정만 저장하며, --lang은 언어를 선택합니다. 기존 토큰과 다운로드는 유지됩니다.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

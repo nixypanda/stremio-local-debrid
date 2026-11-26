@@ -12,11 +12,11 @@ Le serveur consulte les extensions installées, conserve leurs adresses configur
 
 ## Prérequis
 
-Utilisez Node.js 24 ou plus récent, suffisamment d’espace disque et un ordinateur et un téléviseur pouvant communiquer sur le même réseau. La découverte automatique fonctionne avec Stremio 5 pour macOS. Linux et Windows utilisent une liste manuelle d’extensions. Android TV, Google TV et Fire TV sont les appareils principalement visés ; d’autres clients peuvent nécessiter HTTPS et des codecs compatibles.
+Utilisez Node.js 24 ou plus récent, suffisamment d’espace disque et un ordinateur et un téléviseur pouvant communiquer sur le même réseau. La découverte automatique fonctionne avec Stremio 5 pour macOS. Linux utilisent une liste manuelle d’extensions. Android TV, Google TV et Fire TV sont les appareils principalement visés ; d’autres clients peuvent nécessiter HTTPS et des codecs compatibles.
 
 ## Configurer le serveur
 
-Exécutez npm run setup pour générer config.json et configurer le démarrage sur macOS, Linux ou Windows. Sur macOS, connectez Stremio 5 au compte de la TV ; sur Linux/Windows, saisissez les URL des addons dans l'assistant. --yes accepte les valeurs par défaut, --no-service enregistre uniquement la configuration et --lang choisit la langue. Les tokens et téléchargements existants sont conservés.
+Exécutez npm run setup pour générer config.json et configurer le démarrage sur macOS, Linux. Sur macOS, connectez Stremio 5 au compte de la TV ; sur Linux, saisissez les URL des addons dans l'assistant. --yes accepte les valeurs par défaut, --no-service enregistre uniquement la configuration et --lang choisit la langue. Les tokens et téléchargements existants sont conservés.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

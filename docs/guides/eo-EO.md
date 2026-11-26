@@ -12,11 +12,11 @@ La servilo petas fontojn de instalitaj aldonaĵoj kaj konservas iliajn agordojn.
 
 ## Postuloj
 
-Uzu Node.js 24 aŭ pli novan, liberan diskospacon kaj komputilon kaj televidilon atingeblajn en la sama reto. Aŭtomata kontodetekto subtenas Stremio 5 por macOS. Linux kaj Windows uzas permane agorditan aldonaĵliston. Android TV, Google TV kaj Fire TV estas la ĉefaj celoj; aliaj klientoj povas postuli HTTPS kaj kongruajn kodekojn.
+Uzu Node.js 24 aŭ pli novan, liberan diskospacon kaj komputilon kaj televidilon atingeblajn en la sama reto. Aŭtomata kontodetekto subtenas Stremio 5 por macOS. Linux uzas permane agorditan aldonaĵliston. Android TV, Google TV kaj Fire TV estas la ĉefaj celoj; aliaj klientoj povas postuli HTTPS kaj kongruajn kodekojn.
 
 ## Instali la servilon
 
-Rulu npm run setup por krei config.json kaj agordi lanĉon en macOS, Linux aŭ Windows. En macOS, ensalutu en Stremio 5 per la konto de la televidilo; en Linux/Windows, enigu la aldonaĵajn URL-ojn en la asistanto. --yes akceptas defaŭltojn, --no-service nur konservas la agordon, kaj --lang elektas lingvon. Ekzistantaj ĵetonoj kaj elŝutoj estas konservataj.
+Rulu npm run setup por krei config.json kaj agordi lanĉon en macOS, Linux. En macOS, ensalutu en Stremio 5 per la konto de la televidilo; en Linux, enigu la aldonaĵajn URL-ojn en la asistanto. --yes akceptas defaŭltojn, --no-service nur konservas la agordon, kaj --lang elektas lingvon. Ekzistantaj ĵetonoj kaj elŝutoj estas konservataj.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

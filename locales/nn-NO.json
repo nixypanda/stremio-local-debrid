@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Krav",
-      "body": "Bruk Node.js 24 eller nyare, ledig diskplass og ei datamaskin og ein TV som når kvarandre på same nettverk. Automatisk kontooppdaging støttar Stremio 5 for macOS. Linux og Windows brukar ei manuell tilleggsliste. Android TV, Google TV og Fire TV er hovudmåla; andre klientar kan krevje HTTPS og kompatible kodekar."
+      "body": "Bruk Node.js 24 eller nyare, ledig diskplass og ei datamaskin og ein TV som når kvarandre på same nettverk. Automatisk kontooppdaging støttar Stremio 5 for macOS. Linux brukar ei manuell tilleggsliste. Android TV, Google TV og Fire TV er hovudmåla; andre klientar kan krevje HTTPS og kompatible kodekar."
     },
     "setup": {
       "title": "Installer tenaren",
-      "body": "Køyr npm run setup for å lage config.json og setje opp oppstart på macOS, Linux eller Windows. Logg inn i Stremio 5 på macOS med TV-kontoen; skriv tilleggsadressene i vegvisaren på Linux/Windows. --yes godtek standardverdiane, --no-service lagrar berre konfigurasjonen, og --lang vel språk. Eksisterande token og nedlastingar vert tekne vare på."
+      "body": "Køyr npm run setup for å lage config.json og setje opp oppstart på macOS, Linux. Logg inn i Stremio 5 på macOS med TV-kontoen; skriv tilleggsadressene i vegvisaren på Linux. --yes godtek standardverdiane, --no-service lagrar berre konfigurasjonen, og --lang vel språk. Eksisterande token og nedlastingar vert tekne vare på."
     },
     "connect": {
       "title": "Kople til TV-en",
@@ -76,7 +76,7 @@
     "ready": "Tenar klar",
     "cancelled": "Oppsett avbrote",
     "connect": "Opne adressa i status-url.txt og vel Installer i Stremio.",
-    "help": "Køyr npm run setup for å lage config.json og setje opp oppstart på macOS, Linux eller Windows. Logg inn i Stremio 5 på macOS med TV-kontoen; skriv tilleggsadressene i vegvisaren på Linux/Windows. --yes godtek standardverdiane, --no-service lagrar berre konfigurasjonen, og --lang vel språk. Eksisterande token og nedlastingar vert tekne vare på.",
+    "help": "Køyr npm run setup for å lage config.json og setje opp oppstart på macOS, Linux. Logg inn i Stremio 5 på macOS med TV-kontoen; skriv tilleggsadressene i vegvisaren på Linux. --yes godtek standardverdiane, --no-service lagrar berre konfigurasjonen, og --lang vel språk. Eksisterande token og nedlastingar vert tekne vare på.",
     "nonInteractive": "Bruk ein terminal for interaktivt oppsett eller --yes for å godta standardverdiane."
   }
 }

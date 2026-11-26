@@ -12,11 +12,11 @@ Server meminta sumber dari addon terpasang yang kompatibel, dengan mempertahanka
 
 ## Persyaratan
 
-Gunakan Node.js 24 atau lebih baru, ruang disk cukup, serta komputer dan TV di jaringan yang saling terjangkau. Penemuan akun otomatis mendukung Stremio 5 di macOS. Linux dan Windows memakai daftar addon manual. Android TV, Google TV dan Fire TV adalah target utama; klien lain mungkin memerlukan HTTPS dan codec yang kompatibel.
+Gunakan Node.js 24 atau lebih baru, ruang disk cukup, serta komputer dan TV di jaringan yang saling terjangkau. Penemuan akun otomatis mendukung Stremio 5 di macOS. Linux memakai daftar addon manual. Android TV, Google TV dan Fire TV adalah target utama; klien lain mungkin memerlukan HTTPS dan codec yang kompatibel.
 
 ## Menyiapkan server
 
-Jalankan npm run setup untuk membuat config.json dan mengatur startup di macOS, Linux, atau Windows. Di macOS, login ke Stremio 5 dengan akun TV; di Linux/Windows, masukkan URL addon dalam wizard. --yes menerima nilai bawaan, --no-service hanya menyimpan konfigurasi, dan --lang memilih bahasa. Token dan unduhan yang ada tetap dipertahankan.
+Jalankan npm run setup untuk membuat config.json dan mengatur startup di macOS, Linux. Di macOS, login ke Stremio 5 dengan akun TV; di Linux, masukkan URL addon dalam wizard. --yes menerima nilai bawaan, --no-service hanya menyimpan konfigurasi, dan --lang memilih bahasa. Token dan unduhan yang ada tetap dipertahankan.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

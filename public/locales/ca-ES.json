@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Requisits",
-      "body": "Cal Node.js 24 o posterior, espai lliure i un ordinador i televisor accessibles a la mateixa xarxa. La descoberta automàtica del compte funciona amb Stremio 5 per a macOS. Linux i Windows fan servir una llista manual de complements. Android TV, Google TV i Fire TV són els dispositius principals; altres clients poden requerir HTTPS i còdecs compatibles."
+      "body": "Cal Node.js 24 o posterior, espai lliure i un ordinador i televisor accessibles a la mateixa xarxa. La descoberta automàtica del compte funciona amb Stremio 5 per a macOS. Linux fan servir una llista manual de complements. Android TV, Google TV i Fire TV són els dispositius principals; altres clients poden requerir HTTPS i còdecs compatibles."
     },
     "setup": {
       "title": "Instal·lar el servidor",
-      "body": "Executeu npm run setup per generar config.json i configurar l'inici a macOS, Linux o Windows. A macOS, inicieu sessió a Stremio 5 amb el compte de la TV; a Linux/Windows, introduïu els URL dels complements a l'assistent. --yes accepta els valors predeterminats, --no-service només desa la configuració i --lang tria l'idioma. Es conserven els tokens i les baixades existents."
+      "body": "Executeu npm run setup per generar config.json i configurar l'inici a macOS, Linux. A macOS, inicieu sessió a Stremio 5 amb el compte de la TV; a Linux, introduïu els URL dels complements a l'assistent. --yes accepta els valors predeterminats, --no-service només desa la configuració i --lang tria l'idioma. Es conserven els tokens i les baixades existents."
     },
     "connect": {
       "title": "Connectar el televisor",
@@ -76,7 +76,7 @@
     "ready": "Servidor preparat",
     "cancelled": "Configuració cancel·lada",
     "connect": "Obriu l'adreça de status-url.txt i trieu Instal·lar a Stremio.",
-    "help": "Executeu npm run setup per generar config.json i configurar l'inici a macOS, Linux o Windows. A macOS, inicieu sessió a Stremio 5 amb el compte de la TV; a Linux/Windows, introduïu els URL dels complements a l'assistent. --yes accepta els valors predeterminats, --no-service només desa la configuració i --lang tria l'idioma. Es conserven els tokens i les baixades existents.",
+    "help": "Executeu npm run setup per generar config.json i configurar l'inici a macOS, Linux. A macOS, inicieu sessió a Stremio 5 amb el compte de la TV; a Linux, introduïu els URL dels complements a l'assistent. --yes accepta els valors predeterminats, --no-service només desa la configuració i --lang tria l'idioma. Es conserven els tokens i les baixades existents.",
     "nonInteractive": "Feu servir un terminal per a la configuració interactiva o --yes per acceptar els valors predeterminats."
   }
 }

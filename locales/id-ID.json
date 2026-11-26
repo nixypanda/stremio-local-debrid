@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Persyaratan",
-      "body": "Gunakan Node.js 24 atau lebih baru, ruang disk cukup, serta komputer dan TV di jaringan yang saling terjangkau. Penemuan akun otomatis mendukung Stremio 5 di macOS. Linux dan Windows memakai daftar addon manual. Android TV, Google TV dan Fire TV adalah target utama; klien lain mungkin memerlukan HTTPS dan codec yang kompatibel."
+      "body": "Gunakan Node.js 24 atau lebih baru, ruang disk cukup, serta komputer dan TV di jaringan yang saling terjangkau. Penemuan akun otomatis mendukung Stremio 5 di macOS. Linux memakai daftar addon manual. Android TV, Google TV dan Fire TV adalah target utama; klien lain mungkin memerlukan HTTPS dan codec yang kompatibel."
     },
     "setup": {
       "title": "Menyiapkan server",
-      "body": "Jalankan npm run setup untuk membuat config.json dan mengatur startup di macOS, Linux, atau Windows. Di macOS, login ke Stremio 5 dengan akun TV; di Linux/Windows, masukkan URL addon dalam wizard. --yes menerima nilai bawaan, --no-service hanya menyimpan konfigurasi, dan --lang memilih bahasa. Token dan unduhan yang ada tetap dipertahankan."
+      "body": "Jalankan npm run setup untuk membuat config.json dan mengatur startup di macOS, Linux. Di macOS, login ke Stremio 5 dengan akun TV; di Linux, masukkan URL addon dalam wizard. --yes menerima nilai bawaan, --no-service hanya menyimpan konfigurasi, dan --lang memilih bahasa. Token dan unduhan yang ada tetap dipertahankan."
     },
     "connect": {
       "title": "Menghubungkan TV",
@@ -76,7 +76,7 @@
     "ready": "Server siap",
     "cancelled": "Penyiapan dibatalkan",
     "connect": "Buka alamat dalam status-url.txt dan pilih Instal di Stremio.",
-    "help": "Jalankan npm run setup untuk membuat config.json dan mengatur startup di macOS, Linux, atau Windows. Di macOS, login ke Stremio 5 dengan akun TV; di Linux/Windows, masukkan URL addon dalam wizard. --yes menerima nilai bawaan, --no-service hanya menyimpan konfigurasi, dan --lang memilih bahasa. Token dan unduhan yang ada tetap dipertahankan.",
+    "help": "Jalankan npm run setup untuk membuat config.json dan mengatur startup di macOS, Linux. Di macOS, login ke Stremio 5 dengan akun TV; di Linux, masukkan URL addon dalam wizard. --yes menerima nilai bawaan, --no-service hanya menyimpan konfigurasi, dan --lang memilih bahasa. Token dan unduhan yang ada tetap dipertahankan.",
     "nonInteractive": "Gunakan terminal untuk penyiapan interaktif atau --yes untuk menerima nilai bawaan."
   }
 }

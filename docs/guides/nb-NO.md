@@ -12,11 +12,11 @@ Serveren ber installerte tillegg om kilder og bevarer innstillingene deres. Torr
 
 ## Krav
 
-Bruk Node.js 24 eller nyere, ledig diskplass og en datamaskin og TV som når hverandre på samme nettverk. Automatisk kontooppdagelse støtter Stremio 5 for macOS. Linux og Windows bruker en manuell tilleggsliste. Android TV, Google TV og Fire TV er hovedmålene; andre klienter kan kreve HTTPS og kompatible kodeker.
+Bruk Node.js 24 eller nyere, ledig diskplass og en datamaskin og TV som når hverandre på samme nettverk. Automatisk kontooppdagelse støtter Stremio 5 for macOS. Linux bruker en manuell tilleggsliste. Android TV, Google TV og Fire TV er hovedmålene; andre klienter kan kreve HTTPS og kompatible kodeker.
 
 ## Installer serveren
 
-Kjør npm run setup for å opprette config.json og konfigurere oppstart på macOS, Linux eller Windows. Logg inn i Stremio 5 på macOS med TV-ens konto; skriv tilleggsadressene i veiviseren på Linux/Windows. --yes godtar standardverdiene, --no-service lagrer bare konfigurasjonen, og --lang velger språk. Eksisterende token og nedlastinger bevares.
+Kjør npm run setup for å opprette config.json og konfigurere oppstart på macOS, Linux. Logg inn i Stremio 5 på macOS med TV-ens konto; skriv tilleggsadressene i veiviseren på Linux. --yes godtar standardverdiene, --no-service lagrer bare konfigurasjonen, og --lang velger språk. Eksisterende token og nedlastinger bevares.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

@@ -12,11 +12,11 @@ El servidor demana fonts als complements instal·lats i manté la seva configura
 
 ## Requisits
 
-Cal Node.js 24 o posterior, espai lliure i un ordinador i televisor accessibles a la mateixa xarxa. La descoberta automàtica del compte funciona amb Stremio 5 per a macOS. Linux i Windows fan servir una llista manual de complements. Android TV, Google TV i Fire TV són els dispositius principals; altres clients poden requerir HTTPS i còdecs compatibles.
+Cal Node.js 24 o posterior, espai lliure i un ordinador i televisor accessibles a la mateixa xarxa. La descoberta automàtica del compte funciona amb Stremio 5 per a macOS. Linux fan servir una llista manual de complements. Android TV, Google TV i Fire TV són els dispositius principals; altres clients poden requerir HTTPS i còdecs compatibles.
 
 ## Instal·lar el servidor
 
-Executeu npm run setup per generar config.json i configurar l'inici a macOS, Linux o Windows. A macOS, inicieu sessió a Stremio 5 amb el compte de la TV; a Linux/Windows, introduïu els URL dels complements a l'assistent. --yes accepta els valors predeterminats, --no-service només desa la configuració i --lang tria l'idioma. Es conserven els tokens i les baixades existents.
+Executeu npm run setup per generar config.json i configurar l'inici a macOS, Linux. A macOS, inicieu sessió a Stremio 5 amb el compte de la TV; a Linux, introduïu els URL dels complements a l'assistent. --yes accepta els valors predeterminats, --no-service només desa la configuració i --lang tria l'idioma. Es conserven els tokens i les baixades existents.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

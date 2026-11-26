@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Postuloj",
-      "body": "Uzu Node.js 24 aŭ pli novan, liberan diskospacon kaj komputilon kaj televidilon atingeblajn en la sama reto. Aŭtomata kontodetekto subtenas Stremio 5 por macOS. Linux kaj Windows uzas permane agorditan aldonaĵliston. Android TV, Google TV kaj Fire TV estas la ĉefaj celoj; aliaj klientoj povas postuli HTTPS kaj kongruajn kodekojn."
+      "body": "Uzu Node.js 24 aŭ pli novan, liberan diskospacon kaj komputilon kaj televidilon atingeblajn en la sama reto. Aŭtomata kontodetekto subtenas Stremio 5 por macOS. Linux uzas permane agorditan aldonaĵliston. Android TV, Google TV kaj Fire TV estas la ĉefaj celoj; aliaj klientoj povas postuli HTTPS kaj kongruajn kodekojn."
     },
     "setup": {
       "title": "Instali la servilon",
-      "body": "Rulu npm run setup por krei config.json kaj agordi lanĉon en macOS, Linux aŭ Windows. En macOS, ensalutu en Stremio 5 per la konto de la televidilo; en Linux/Windows, enigu la aldonaĵajn URL-ojn en la asistanto. --yes akceptas defaŭltojn, --no-service nur konservas la agordon, kaj --lang elektas lingvon. Ekzistantaj ĵetonoj kaj elŝutoj estas konservataj."
+      "body": "Rulu npm run setup por krei config.json kaj agordi lanĉon en macOS, Linux. En macOS, ensalutu en Stremio 5 per la konto de la televidilo; en Linux, enigu la aldonaĵajn URL-ojn en la asistanto. --yes akceptas defaŭltojn, --no-service nur konservas la agordon, kaj --lang elektas lingvon. Ekzistantaj ĵetonoj kaj elŝutoj estas konservataj."
     },
     "connect": {
       "title": "Konekti la televidilon",
@@ -76,7 +76,7 @@
     "ready": "Servilo preta",
     "cancelled": "Agordado nuligita",
     "connect": "Malfermu la adreson en status-url.txt kaj elektu Instali en Stremio.",
-    "help": "Rulu npm run setup por krei config.json kaj agordi lanĉon en macOS, Linux aŭ Windows. En macOS, ensalutu en Stremio 5 per la konto de la televidilo; en Linux/Windows, enigu la aldonaĵajn URL-ojn en la asistanto. --yes akceptas defaŭltojn, --no-service nur konservas la agordon, kaj --lang elektas lingvon. Ekzistantaj ĵetonoj kaj elŝutoj estas konservataj.",
+    "help": "Rulu npm run setup por krei config.json kaj agordi lanĉon en macOS, Linux. En macOS, ensalutu en Stremio 5 per la konto de la televidilo; en Linux, enigu la aldonaĵajn URL-ojn en la asistanto. --yes akceptas defaŭltojn, --no-service nur konservas la agordon, kaj --lang elektas lingvon. Ekzistantaj ĵetonoj kaj elŝutoj estas konservataj.",
     "nonInteractive": "Uzu terminalon por interaga agordado aŭ --yes por akcepti defaŭltojn."
   }
 }

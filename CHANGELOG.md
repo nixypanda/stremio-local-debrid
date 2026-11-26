@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Drop Windows server support, Task Scheduler integration, and Windows CI. Server installations now support macOS and Linux only.
+- Bound server-test startup and shutdown, and stop child processes before deleting temporary working directories.
+
 ## 1.2.0
 
 - Public self-hosting project under Origami Ltd with MIT-PoU licensing.

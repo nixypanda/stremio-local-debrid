@@ -12,11 +12,11 @@ O servidor lê a lista de addons instalados, preserva o endereço configurado de
 
 ## Requisitos
 
-Use Node.js 24 ou mais recente, espaço livre em disco e computador e TV na mesma rede, com comunicação entre eles. A descoberta automática da conta funciona com o Stremio 5 para macOS. Linux e Windows podem executar o servidor com uma lista manual de addons. Android TV, Google TV e Fire TV são os principais destinos; outros clientes podem exigir HTTPS e codecs compatíveis.
+Use Node.js 24 ou mais recente, espaço livre em disco e computador e TV na mesma rede, com comunicação entre eles. A descoberta automática da conta funciona com o Stremio 5 para macOS. Linux podem executar o servidor com uma lista manual de addons. Android TV, Google TV e Fire TV são os principais destinos; outros clientes podem exigir HTTPS e codecs compatíveis.
 
 ## Preparar o servidor
 
-Execute npm run setup para gerar o config.json e configurar a inicialização no macOS, Linux ou Windows. No macOS, entre no Stremio 5 com a conta da TV; no Linux/Windows, informe as URLs dos addons no assistente. --yes aceita os padrões, --no-service apenas salva a configuração e --lang escolhe o idioma. Tokens e downloads existentes são preservados.
+Execute npm run setup para gerar o config.json e configurar a inicialização no macOS, Linux. No macOS, entre no Stremio 5 com a conta da TV; no Linux, informe as URLs dos addons no assistente. --yes aceita os padrões, --no-service apenas salva a configuração e --lang escolhe o idioma. Tokens e downloads existentes são preservados.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

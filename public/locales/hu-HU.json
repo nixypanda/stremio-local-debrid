@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Követelmények",
-      "body": "Node.js 24 vagy újabb, szabad lemezterület és egymást elérő számítógép és tévé kell ugyanazon a hálózaton. Az automatikus fiókfelderítés a macOS Stremio 5-öt támogatja. Linux és Windows kézi bővítménylistát használ. Fő célok: Android TV, Google TV és Fire TV; más kliensek HTTPS-t és megfelelő kodekeket kérhetnek."
+      "body": "Node.js 24 vagy újabb, szabad lemezterület és egymást elérő számítógép és tévé kell ugyanazon a hálózaton. Az automatikus fiókfelderítés a macOS Stremio 5-öt támogatja. Linux kézi bővítménylistát használ. Fő célok: Android TV, Google TV és Fire TV; más kliensek HTTPS-t és megfelelő kodekeket kérhetnek."
     },
     "setup": {
       "title": "Kiszolgáló telepítése",
-      "body": "Futtassa az npm run setup parancsot a config.json létrehozásához és az indítás beállításához macOS, Linux vagy Windows rendszeren. macOS-en jelentkezzen be a Stremio 5-be a TV fiókjával; Linux/Windowson adja meg a bővítmények URL-jeit a varázslóban. A --yes elfogadja az alapértékeket, a --no-service csak a beállítást menti, a --lang pedig nyelvet választ. A meglévő tokenek és letöltések megmaradnak."
+      "body": "Futtassa az npm run setup parancsot a config.json létrehozásához és az indítás beállításához macOS, Linux rendszeren. macOS-en jelentkezzen be a Stremio 5-be a TV fiókjával; Linuxon adja meg a bővítmények URL-jeit a varázslóban. A --yes elfogadja az alapértékeket, a --no-service csak a beállítást menti, a --lang pedig nyelvet választ. A meglévő tokenek és letöltések megmaradnak."
     },
     "connect": {
       "title": "Tévé csatlakoztatása",
@@ -76,7 +76,7 @@
     "ready": "A szerver kész",
     "cancelled": "Beállítás megszakítva",
     "connect": "Nyissa meg a status-url.txt címét, és válassza a Telepítés Stremióba lehetőséget.",
-    "help": "Futtassa az npm run setup parancsot a config.json létrehozásához és az indítás beállításához macOS, Linux vagy Windows rendszeren. macOS-en jelentkezzen be a Stremio 5-be a TV fiókjával; Linux/Windowson adja meg a bővítmények URL-jeit a varázslóban. A --yes elfogadja az alapértékeket, a --no-service csak a beállítást menti, a --lang pedig nyelvet választ. A meglévő tokenek és letöltések megmaradnak.",
+    "help": "Futtassa az npm run setup parancsot a config.json létrehozásához és az indítás beállításához macOS, Linux rendszeren. macOS-en jelentkezzen be a Stremio 5-be a TV fiókjával; Linuxon adja meg a bővítmények URL-jeit a varázslóban. A --yes elfogadja az alapértékeket, a --no-service csak a beállítást menti, a --lang pedig nyelvet választ. A meglévő tokenek és letöltések megmaradnak.",
     "nonInteractive": "Használjon terminált az interaktív beállításhoz vagy --yes kapcsolót az alapértékek elfogadásához."
   }
 }

@@ -8,10 +8,28 @@ import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { prepareHeadless } from '../scripts/prepare-headless.mjs';
 
-async function fixture(t) {
+async function fixture(t, beforeCleanup = async () => {}) {
   const directory = await mkdtemp(join(tmpdir(), 'stremio-headless-'));
-  t.after(() => rm(directory, { recursive: true, force: true }));
+  t.after(async () => {
+    try { await beforeCleanup(); }
+    finally { await rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); }
+  });
   return { directory, settings: { stateDir: join(directory, 'state'), cacheDir: join(directory, 'cache'), baseUrl: 'https://cache.example/', host: '127.0.0.1', port: 7810, sources: [] } };
+}
+
+async function stopChild(child) {
+  if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return;
+  const closed = once(child, 'close', { signal: AbortSignal.timeout(5000) });
+  const forceKill = setTimeout(() => child.kill('SIGKILL'), 2000);
+  forceKill.unref();
+  child.kill('SIGTERM');
+  try { await closed; }
+  finally {
+    clearTimeout(forceKill);
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    child.stdout.destroy();
+    child.stderr.destroy();
+  }
 }
 
 test('headless configuration preserves identity, updates settings and keeps URLs private', async t => {
@@ -23,9 +41,7 @@ test('headless configuration preserves identity, updates settings and keeps URLs
   assert.equal(second.prefetchEpisodes, 2);
   assert.equal(await readFile(join(settings.stateDir, 'addon-url.txt'), 'utf8'), `https://cache.example/${first.token}/manifest.json\n`);
   assert.deepEqual(JSON.parse(await readFile(join(settings.stateDir, 'config.json'), 'utf8')), second);
-  if (process.platform !== 'win32') {
-    for (const name of ['token', 'config.json', 'addon-url.txt', 'status-url.txt']) assert.equal((await stat(join(settings.stateDir, name))).mode & 0o777, 0o600);
-  }
+  for (const name of ['token', 'config.json', 'addon-url.txt', 'status-url.txt']) assert.equal((await stat(join(settings.stateDir, name))).mode & 0o777, 0o600);
 });
 
 test('headless configuration accepts an external token and rejects empty secrets', async t => {
@@ -38,34 +54,31 @@ test('headless configuration accepts an external token and rejects empty secrets
 });
 
 test('real server starts from an external config without modifying the application directory', { timeout: 15000 }, async t => {
-  const { directory, settings } = await fixture(t);
+  let child;
+  // Stop the child before removing its working directory, even on test failure.
+  const { directory, settings } = await fixture(t, () => stopChild(child));
   const configFile = join(directory, 'private-config.json');
   await writeFile(configFile, JSON.stringify({ ...settings, port: 0, token: 'external-secret', autoDiscoverAddons: false }));
-  const child = spawn(process.execPath, [fileURLToPath(new URL('../server.mjs', import.meta.url))], {
+  child = spawn(process.execPath, [fileURLToPath(new URL('../server.mjs', import.meta.url))], {
     cwd: directory,
     env: { ...process.env, STREMIO_LOCAL_DEBRID_CONFIG: configFile },
     stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  t.after(async () => {
-    if (child.exitCode === null && child.signalCode === null) {
-      const exited = once(child, 'exit');
-      child.kill('SIGTERM');
-      await exited;
-    }
   });
   let errors = '';
   child.stderr.on('data', data => { errors += data; });
   const address = await new Promise((done, reject) => {
     let output = '';
-    child.on('error', reject);
-    child.on('exit', code => reject(new Error(`Server exited ${code}: ${errors}`)));
+    const startupTimeout = setTimeout(() => reject(new Error(`Server startup timed out: ${errors}`)), 10000);
+    const finish = callback => value => { clearTimeout(startupTimeout); callback(value); };
+    child.on('error', finish(reject));
+    child.on('exit', code => finish(reject)(new Error(`Server exited ${code}: ${errors}`)));
     child.stdout.on('data', data => {
       output += data;
       const match = output.match(/http:\/\/127\.0\.0\.1:\d+/);
-      if (match) done(match[0]);
+      if (match) finish(done)(match[0]);
     });
   });
-  const response = await fetch(`${address}/external-secret/manifest.json`);
+  const response = await fetch(`${address}/external-secret/manifest.json`, { signal: AbortSignal.timeout(5000) });
   assert.equal(response.status, 200);
   assert.equal((await response.json()).id, 'local.stremio.cache');
 });

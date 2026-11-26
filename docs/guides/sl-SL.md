@@ -12,11 +12,11 @@ Strežnik zahteva vire od nameščenih dodatkov in ohrani njihove nastavitve. Ha
 
 ## Zahteve
 
-Potrebujete Node.js 24 ali novejši, prosti prostor ter računalnik in televizor, ki sta dosegljiva v istem omrežju. Samodejno odkrivanje računa podpira Stremio 5 za macOS. Linux in Windows uporabljata ročni seznam dodatkov. Glavne naprave so Android TV, Google TV in Fire TV; drugi odjemalci lahko zahtevajo HTTPS in združljive kodeke.
+Potrebujete Node.js 24 ali novejši, prosti prostor ter računalnik in televizor, ki sta dosegljiva v istem omrežju. Samodejno odkrivanje računa podpira Stremio 5 za macOS. Linux uporabljata ročni seznam dodatkov. Glavne naprave so Android TV, Google TV in Fire TV; drugi odjemalci lahko zahtevajo HTTPS in združljive kodeke.
 
 ## Namestitev strežnika
 
-Zaženite npm run setup za izdelavo config.json in nastavitev zagona v macOS, Linuxu ali Windows. V macOS se prijavite v Stremio 5 z računom TV; v Linuxu/Windows vnesite URL-je dodatkov v čarovniku. --yes sprejme privzete vrednosti, --no-service samo shrani nastavitve, --lang pa izbere jezik. Obstoječi žetoni in prenosi se ohranijo.
+Zaženite npm run setup za izdelavo config.json in nastavitev zagona v macOS, Linuxu. V macOS se prijavite v Stremio 5 z računom TV; v Linuxu vnesite URL-je dodatkov v čarovniku. --yes sprejme privzete vrednosti, --no-service samo shrani nastavitve, --lang pa izbere jezik. Obstoječi žetoni in prenosi se ohranijo.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

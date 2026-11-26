@@ -12,11 +12,11 @@ Máy chủ lấy nguồn từ các tiện ích đã cài tương thích, giữ n
 
 ## Yêu cầu
 
-Cần Node.js 24 trở lên, đủ dung lượng trống, máy tính và TV trong cùng mạng có thể kết nối. Tự động phát hiện tài khoản hỗ trợ Stremio 5 trên macOS. Linux và Windows dùng danh sách tiện ích nhập thủ công. Android TV, Google TV và Fire TV là mục tiêu chính; ứng dụng khác có thể cần HTTPS và codec tương thích.
+Cần Node.js 24 trở lên, đủ dung lượng trống, máy tính và TV trong cùng mạng có thể kết nối. Tự động phát hiện tài khoản hỗ trợ Stremio 5 trên macOS. Linux dùng danh sách tiện ích nhập thủ công. Android TV, Google TV và Fire TV là mục tiêu chính; ứng dụng khác có thể cần HTTPS và codec tương thích.
 
 ## Thiết lập máy chủ
 
-Chạy npm run setup để tạo config.json và cấu hình khởi động trên macOS, Linux hoặc Windows. Trên macOS, đăng nhập Stremio 5 bằng tài khoản TV; trên Linux/Windows, nhập URL addon trong trình hướng dẫn. --yes chấp nhận mặc định, --no-service chỉ lưu cấu hình và --lang chọn ngôn ngữ. Token và nội dung đã tải được giữ nguyên.
+Chạy npm run setup để tạo config.json và cấu hình khởi động trên macOS, Linux. Trên macOS, đăng nhập Stremio 5 bằng tài khoản TV; trên Linux, nhập URL addon trong trình hướng dẫn. --yes chấp nhận mặc định, --no-service chỉ lưu cấu hình và --lang chọn ngôn ngữ. Token và nội dung đã tải được giữ nguyên.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

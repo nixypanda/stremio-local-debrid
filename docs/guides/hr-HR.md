@@ -12,11 +12,11 @@ Poslužitelj traži izvore od instaliranih dodataka i čuva njihove postavke. Ha
 
 ## Zahtjevi
 
-Potrebni su Node.js 24 ili noviji, slobodan prostor te računalo i televizor dostupni u istoj mreži. Automatsko otkrivanje računa podržava Stremio 5 za macOS. Linux i Windows koriste ručni popis dodataka. Glavni uređaji su Android TV, Google TV i Fire TV; drugi klijenti mogu zahtijevati HTTPS i kompatibilne kodeke.
+Potrebni su Node.js 24 ili noviji, slobodan prostor te računalo i televizor dostupni u istoj mreži. Automatsko otkrivanje računa podržava Stremio 5 za macOS. Linux koriste ručni popis dodataka. Glavni uređaji su Android TV, Google TV i Fire TV; drugi klijenti mogu zahtijevati HTTPS i kompatibilne kodeke.
 
 ## Instalacija poslužitelja
 
-Pokrenite npm run setup za izradu config.json i postavljanje pokretanja na macOS-u, Linuxu ili Windowsu. Na macOS-u prijavite se u Stremio 5 računom TV-a; na Linuxu/Windowsu unesite URL-ove dodataka u čarobnjaku. --yes prihvaća zadane vrijednosti, --no-service samo sprema konfiguraciju, a --lang bira jezik. Postojeći tokeni i preuzimanja ostaju sačuvani.
+Pokrenite npm run setup za izradu config.json i postavljanje pokretanja na macOS-u, Linuxu. Na macOS-u prijavite se u Stremio 5 računom TV-a; na Linuxu unesite URL-ove dodataka u čarobnjaku. --yes prihvaća zadane vrijednosti, --no-service samo sprema konfiguraciju, a --lang bira jezik. Postojeći tokeni i preuzimanja ostaju sačuvani.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

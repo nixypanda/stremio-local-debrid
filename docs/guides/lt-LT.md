@@ -12,11 +12,11 @@ Serveris prašo šaltinių iš įdiegtų priedų ir išlaiko jų nuostatas. Torr
 
 ## Reikalavimai
 
-Reikia Node.js 24 ar naujesnės versijos, laisvos vietos diske bei tame pačiame tinkle pasiekiamų kompiuterio ir televizoriaus. Automatinis paskyros aptikimas veikia su Stremio 5 macOS sistemoje. Linux ir Windows naudoja rankinį priedų sąrašą. Pagrindiniai įrenginiai: Android TV, Google TV ir Fire TV; kitiems klientams gali reikėti HTTPS ir suderinamų kodekų.
+Reikia Node.js 24 ar naujesnės versijos, laisvos vietos diske bei tame pačiame tinkle pasiekiamų kompiuterio ir televizoriaus. Automatinis paskyros aptikimas veikia su Stremio 5 macOS sistemoje. Linux naudoja rankinį priedų sąrašą. Pagrindiniai įrenginiai: Android TV, Google TV ir Fire TV; kitiems klientams gali reikėti HTTPS ir suderinamų kodekų.
 
 ## Serverio diegimas
 
-Paleiskite npm run setup, kad sukurtumėte config.json ir nustatytumėte paleidimą macOS, Linux arba Windows. macOS prisijunkite prie Stremio 5 TV paskyra; Linux/Windows vedlyje įveskite priedų URL. --yes priima numatytąsias reikšmes, --no-service tik išsaugo konfigūraciją, o --lang pasirenka kalbą. Esami prieigos raktai ir atsisiuntimai išsaugomi.
+Paleiskite npm run setup, kad sukurtumėte config.json ir nustatytumėte paleidimą macOS, Linux. macOS prisijunkite prie Stremio 5 TV paskyra; Linux vedlyje įveskite priedų URL. --yes priima numatytąsias reikšmes, --no-service tik išsaugo konfigūraciją, o --lang pasirenka kalbą. Esami prieigos raktai ir atsisiuntimai išsaugomi.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

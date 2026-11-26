@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Zahtjevi",
-      "body": "Potrebni su Node.js 24 ili noviji, slobodan prostor te računalo i televizor dostupni u istoj mreži. Automatsko otkrivanje računa podržava Stremio 5 za macOS. Linux i Windows koriste ručni popis dodataka. Glavni uređaji su Android TV, Google TV i Fire TV; drugi klijenti mogu zahtijevati HTTPS i kompatibilne kodeke."
+      "body": "Potrebni su Node.js 24 ili noviji, slobodan prostor te računalo i televizor dostupni u istoj mreži. Automatsko otkrivanje računa podržava Stremio 5 za macOS. Linux koriste ručni popis dodataka. Glavni uređaji su Android TV, Google TV i Fire TV; drugi klijenti mogu zahtijevati HTTPS i kompatibilne kodeke."
     },
     "setup": {
       "title": "Instalacija poslužitelja",
-      "body": "Pokrenite npm run setup za izradu config.json i postavljanje pokretanja na macOS-u, Linuxu ili Windowsu. Na macOS-u prijavite se u Stremio 5 računom TV-a; na Linuxu/Windowsu unesite URL-ove dodataka u čarobnjaku. --yes prihvaća zadane vrijednosti, --no-service samo sprema konfiguraciju, a --lang bira jezik. Postojeći tokeni i preuzimanja ostaju sačuvani."
+      "body": "Pokrenite npm run setup za izradu config.json i postavljanje pokretanja na macOS-u, Linuxu. Na macOS-u prijavite se u Stremio 5 računom TV-a; na Linuxu unesite URL-ove dodataka u čarobnjaku. --yes prihvaća zadane vrijednosti, --no-service samo sprema konfiguraciju, a --lang bira jezik. Postojeći tokeni i preuzimanja ostaju sačuvani."
     },
     "connect": {
       "title": "Povezivanje televizora",
@@ -76,7 +76,7 @@
     "ready": "Poslužitelj spreman",
     "cancelled": "Postavljanje otkazano",
     "connect": "Otvorite adresu iz status-url.txt i odaberite Instaliraj u Stremio.",
-    "help": "Pokrenite npm run setup za izradu config.json i postavljanje pokretanja na macOS-u, Linuxu ili Windowsu. Na macOS-u prijavite se u Stremio 5 računom TV-a; na Linuxu/Windowsu unesite URL-ove dodataka u čarobnjaku. --yes prihvaća zadane vrijednosti, --no-service samo sprema konfiguraciju, a --lang bira jezik. Postojeći tokeni i preuzimanja ostaju sačuvani.",
+    "help": "Pokrenite npm run setup za izradu config.json i postavljanje pokretanja na macOS-u, Linuxu. Na macOS-u prijavite se u Stremio 5 računom TV-a; na Linuxu unesite URL-ove dodataka u čarobnjaku. --yes prihvaća zadane vrijednosti, --no-service samo sprema konfiguraciju, a --lang bira jezik. Postojeći tokeni i preuzimanja ostaju sačuvani.",
     "nonInteractive": "Upotrijebite terminal za interaktivno postavljanje ili --yes za zadane vrijednosti."
   }
 }

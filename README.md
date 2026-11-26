@@ -8,7 +8,7 @@ Stremio Local Debrid is a self-hosted torrent cache by [Origami Ltd](https://git
 
 ## Install
 
-You need **Node.js 24 or later**, free disk space, and a computer reachable by your TV on the same network. Android TV, Google TV and Fire TV are the primary playback targets. The TV must support the video's codecs; the server does not transcode.
+You need **macOS or Linux**, **Node.js 24 or later**, free disk space, and a computer reachable by your TV on the same network. Windows servers are not supported. Android TV, Google TV and Fire TV are the primary playback targets. The TV must support the video's codecs; the server does not transcode.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git
@@ -19,7 +19,7 @@ npm run setup
 
 The built-in setup wizard creates `config.json` for you. It asks for the language, network address, cache folder and disk limits, then offers to start the background service and register automatic startup. Press Enter to keep a suggested value; use Ctrl+C to cancel before saving. You do not need to copy or hand-edit a configuration file. Rerunning setup retains the existing token, settings and downloads.
 
-**macOS:** sign in to **Stremio 5** on the computer using the TV's account and enable account discovery in the wizard. Stremio can remain closed afterward. **Linux and Windows:** enter your configured addon manifest URLs in the wizard, one at a time, then leave the next answer empty to finish. Configured URLs may contain credentials and stay in the private configuration.
+**macOS:** sign in to **Stremio 5** on the computer using the TV's account and enable account discovery in the wizard. Stremio can remain closed afterward. **Linux:** enter your configured addon manifest URLs in the wizard, one at a time, then leave the next answer empty to finish. Configured URLs may contain credentials and stay in the private configuration.
 
 For unattended installation, accept the existing configuration or detected defaults. You can also generate configuration without installing a service:
 
@@ -42,17 +42,16 @@ The public installation portal helps you select a language and format your priva
 **Nix/NixOS:** this repository provides a flake package and a hardened NixOS
 service module. See [Nix setup](docs/NIX.md) for installation and dotfiles migration.
 
-The same installer supports all three operating systems. Startup occurs when the installing user **logs in**.
+The same installer supports macOS and Linux. Startup occurs when the installing user **logs in**.
 
 | System | Startup mechanism | Runtime directory | Check status |
 | --- | --- | --- | --- |
 | macOS | LaunchAgent `local.stremio.cache` | `~/Library/Application Support/stremio-local-debrid` | `launchctl print gui/$(id -u)/local.stremio.cache` |
 | Linux | systemd user service `stremio-local-debrid.service` | `$XDG_DATA_HOME/stremio-local-debrid` or `~/.local/share/stremio-local-debrid` | `systemctl --user status stremio-local-debrid` |
-| Windows | Task Scheduler task `Stremio Local Debrid` | `%LOCALAPPDATA%\StremioLocalDebrid` | Task Scheduler → Stremio Local Debrid |
 
-Linux requires a running systemd user session. For an unattended Linux server, an administrator can enable lingering for the installing user with `loginctl enable-linger USERNAME`. Desktop installation does not require it. Windows uses the current user's interactive logon; install from that user's account. Allow inbound TCP port **7810** on the private network if the operating system's firewall blocks the TV.
+Linux requires a running systemd user session. For an unattended Linux server, an administrator can enable lingering for the installing user with `loginctl enable-linger USERNAME`. Desktop installation does not require it. Allow inbound TCP port **7810** on the private network if the operating system's firewall blocks the TV.
 
-On macOS, the service prevents idle sleep during active downloads and playback. On Windows and Linux, configure the computer's power settings to keep it awake. Closing a laptop lid, manual sleep, shutdown or loss of the network interrupts streaming.
+On macOS, the service prevents idle sleep during active downloads and playback. On Linux, configure the computer's power settings to keep it awake. Closing a laptop lid, manual sleep, shutdown or loss of the network interrupts streaming.
 
 To remove automatic startup and stop the service:
 
@@ -125,10 +124,10 @@ The protected dashboard shows cached files and detected addons. `downloads.json`
 ## Troubleshooting
 
 - **The TV cannot connect:** check the computer is awake, `baseUrl` uses its LAN address, both devices can communicate and TCP port 7810 is allowed. Guest Wi-Fi or client isolation can block access.
-- **No Local Cache sources:** confirm the addon appears on the dashboard and returns a supported torrent stream. On macOS, sign in to Stremio 5; on Linux or Windows, configure `sources` manually. Refresh TV addons after installation.
+- **No Local Cache sources:** confirm the addon appears on the dashboard and returns a supported torrent stream. On macOS, sign in to Stremio 5; on Linux, configure `sources` manually. Refresh TV addons after installation.
 - **A movie takes time to start:** first playback needs torrent metadata and enough pieces from peers. An HTTP cache cannot make an unavailable torrent download. Later playback reuses disk data; restart verification also takes time.
 - **The video will not decode:** choose a codec supported by the TV. The server downloads and streams; it does not convert video.
-- **The service fails:** check macOS `state/service-error.log`, Linux `journalctl --user -u stremio-local-debrid`, or the Windows task's Last Run Result. `npm start` shows errors in a terminal using the source configuration.
+- **The service fails:** check macOS `state/service-error.log` or Linux `journalctl --user -u stremio-local-debrid`. `npm start` shows errors in a terminal using the source configuration.
 
 ## Development and publication
 
@@ -139,7 +138,7 @@ npm run build:docs
 npm test
 ```
 
-Tests use synthetic private torrents and local addon servers. They verify single-file selection, HTTP ranges, continued downloading, restart recovery, offline cached playback, account synchronization, configured URLs, filtering, magnets, private metadata, deduplication, language routes and startup configuration. CI runs on macOS, Linux and Windows; native validators check the platform's startup files. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Tests use synthetic private torrents and local addon servers. They verify single-file selection, HTTP ranges, continued downloading, restart recovery, offline cached playback, account synchronization, configured URLs, filtering, magnets, private metadata, deduplication, language routes and startup configuration. CI runs on macOS and Linux; native validators check the platform's startup files. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The GitHub Pages workflow publishes `public/`, including a discovery manifest, `/configure`, the logo and all translated guides. This static website is suitable for addon directories. Never submit a user's private LAN manifest to a public directory. Directory review and Stremio account installation are separate steps. See [publication notes](docs/PUBLISHING.md).
 

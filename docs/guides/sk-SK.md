@@ -12,11 +12,11 @@ Server žiada nainštalované doplnky o zdroje a zachováva ich nastavenia. Hash
 
 ## Požiadavky
 
-Použite Node.js 24 alebo novší, voľné miesto na disku a počítač a televízor dostupné v rovnakej sieti. Automatické zistenie účtu podporuje Stremio 5 pre macOS. Linux a Windows používajú ručný zoznam doplnkov. Hlavné zariadenia sú Android TV, Google TV a Fire TV; iné klienty môžu vyžadovať HTTPS a kompatibilné kodeky.
+Použite Node.js 24 alebo novší, voľné miesto na disku a počítač a televízor dostupné v rovnakej sieti. Automatické zistenie účtu podporuje Stremio 5 pre macOS. Linux používajú ručný zoznam doplnkov. Hlavné zariadenia sú Android TV, Google TV a Fire TV; iné klienty môžu vyžadovať HTTPS a kompatibilné kodeky.
 
 ## Inštalácia servera
 
-Spustite npm run setup na vytvorenie config.json a nastavenie spúšťania v macOS, Linuxe alebo Windows. V macOS sa prihláste do Stremio 5 účtom TV; v Linuxe/Windows zadajte URL doplnkov v sprievodcovi. --yes prijme predvolené hodnoty, --no-service iba uloží konfiguráciu a --lang zvolí jazyk. Existujúce tokeny a stiahnuté súbory zostávajú zachované.
+Spustite npm run setup na vytvorenie config.json a nastavenie spúšťania v macOS, Linuxe. V macOS sa prihláste do Stremio 5 účtom TV; v Linuxe zadajte URL doplnkov v sprievodcovi. --yes prijme predvolené hodnoty, --no-service iba uloží konfiguráciu a --lang zvolí jazyk. Existujúce tokeny a stiahnuté súbory zostávajú zachované.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

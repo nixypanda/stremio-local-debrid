@@ -8,7 +8,7 @@ body:
     id: version
     attributes:
       label: Version and operating system
-      placeholder: "1.2.0, Windows 11, Node.js 24"
+      placeholder: "1.2.0, macOS or Linux version, Node.js 24"
     validations:
       required: true
   - type: textarea

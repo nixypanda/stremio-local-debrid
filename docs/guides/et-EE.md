@@ -12,11 +12,11 @@ Server küsib allikaid paigaldatud lisadelt ja säilitab nende seadistused. Torr
 
 ## Nõuded
 
-Vaja on Node.js 24 või uuemat, vaba kettaruumi ning samas võrgus teineteist kättesaadavaid arvutit ja telerit. Konto automaatne tuvastus toetab macOS-i Stremio 5. Linux ja Windows kasutavad käsitsi määratud lisade loendit. Peamised sihtseadmed on Android TV, Google TV ja Fire TV; muud kliendid võivad vajada HTTPS-i ja sobivaid koodekeid.
+Vaja on Node.js 24 või uuemat, vaba kettaruumi ning samas võrgus teineteist kättesaadavaid arvutit ja telerit. Konto automaatne tuvastus toetab macOS-i Stremio 5. Linux kasutavad käsitsi määratud lisade loendit. Peamised sihtseadmed on Android TV, Google TV ja Fire TV; muud kliendid võivad vajada HTTPS-i ja sobivaid koodekeid.
 
 ## Serveri paigaldamine
 
-Käivita npm run setup, et luua config.json ja seadistada käivitumine macOS-is, Linuxis või Windowsis. macOS-is logi Stremio 5-sse TV kontoga; Linuxis/Windowsis sisesta lisade URL-id viisardis. --yes nõustub vaikeväärtustega, --no-service salvestab ainult seadistuse ja --lang valib keele. Olemasolevad tokenid ja allalaadimised säilivad.
+Käivita npm run setup, et luua config.json ja seadistada käivitumine macOS-is, Linuxis. macOS-is logi Stremio 5-sse TV kontoga; Linuxis sisesta lisade URL-id viisardis. --yes nõustub vaikeväärtustega, --no-service salvestab ainult seadistuse ja --lang valib keele. Olemasolevad tokenid ja allalaadimised säilivad.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

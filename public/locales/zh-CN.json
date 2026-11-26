@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "运行要求",
-      "body": "需要 Node.js 24 或更新版本、足够的磁盘空间，以及在同一可互通网络中的电脑和电视。账户自动发现支持 macOS 上的 Stremio 5。Linux 和 Windows 使用手动插件列表。主要面向 Android TV、Google TV 和 Fire TV；其他客户端可能要求 HTTPS 和兼容的编解码器。"
+      "body": "需要 Node.js 24 或更新版本、足够的磁盘空间，以及在同一可互通网络中的电脑和电视。账户自动发现支持 macOS 上的 Stremio 5。Linux 使用手动插件列表。主要面向 Android TV、Google TV 和 Fire TV；其他客户端可能要求 HTTPS 和兼容的编解码器。"
     },
     "setup": {
       "title": "设置服务器",
-      "body": "运行 npm run setup 生成 config.json 并配置 macOS、Linux 或 Windows 的启动方式。在 macOS 上用电视的账号登录 Stremio 5；在 Linux/Windows 上将插件 URL 输入向导。--yes 接受默认值，--no-service 仅保存配置，--lang 选择语言。现有令牌和下载内容会保留。"
+      "body": "运行 npm run setup 生成 config.json 并配置 macOS、Linux 的启动方式。在 macOS 上用电视的账号登录 Stremio 5；在 Linux 上将插件 URL 输入向导。--yes 接受默认值，--no-service 仅保存配置，--lang 选择语言。现有令牌和下载内容会保留。"
     },
     "connect": {
       "title": "连接电视",
@@ -76,7 +76,7 @@
     "ready": "服务器已就绪",
     "cancelled": "设置已取消",
     "connect": "打开 status-url.txt 中的地址并选择安装到 Stremio。",
-    "help": "运行 npm run setup 生成 config.json 并配置 macOS、Linux 或 Windows 的启动方式。在 macOS 上用电视的账号登录 Stremio 5；在 Linux/Windows 上将插件 URL 输入向导。--yes 接受默认值，--no-service 仅保存配置，--lang 选择语言。现有令牌和下载内容会保留。",
+    "help": "运行 npm run setup 生成 config.json 并配置 macOS、Linux 的启动方式。在 macOS 上用电视的账号登录 Stremio 5；在 Linux 上将插件 URL 输入向导。--yes 接受默认值，--no-service 仅保存配置，--lang 选择语言。现有令牌和下载内容会保留。",
     "nonInteractive": "请在终端中运行交互式设置，或传入 --yes 接受默认值。"
   }
 }

@@ -12,11 +12,11 @@
 
 ## 运行要求
 
-需要 Node.js 24 或更新版本、足够的磁盘空间，以及在同一可互通网络中的电脑和电视。账户自动发现支持 macOS 上的 Stremio 5。Linux 和 Windows 使用手动插件列表。主要面向 Android TV、Google TV 和 Fire TV；其他客户端可能要求 HTTPS 和兼容的编解码器。
+需要 Node.js 24 或更新版本、足够的磁盘空间，以及在同一可互通网络中的电脑和电视。账户自动发现支持 macOS 上的 Stremio 5。Linux 使用手动插件列表。主要面向 Android TV、Google TV 和 Fire TV；其他客户端可能要求 HTTPS 和兼容的编解码器。
 
 ## 设置服务器
 
-运行 npm run setup 生成 config.json 并配置 macOS、Linux 或 Windows 的启动方式。在 macOS 上用电视的账号登录 Stremio 5；在 Linux/Windows 上将插件 URL 输入向导。--yes 接受默认值，--no-service 仅保存配置，--lang 选择语言。现有令牌和下载内容会保留。
+运行 npm run setup 生成 config.json 并配置 macOS、Linux 的启动方式。在 macOS 上用电视的账号登录 Stremio 5；在 Linux 上将插件 URL 输入向导。--yes 接受默认值，--no-service 仅保存配置，--lang 选择语言。现有令牌和下载内容会保留。
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

@@ -12,11 +12,11 @@ Serverul cere surse de la addonurile instalate și păstrează configurările lo
 
 ## Cerințe
 
-Ai nevoie de Node.js 24 sau mai nou, spațiu liber și un calculator și televizor accesibile în aceeași rețea. Detectarea automată a contului acceptă Stremio 5 pentru macOS. Linux și Windows folosesc o listă manuală de addonuri. Android TV, Google TV și Fire TV sunt țintele principale; alți clienți pot necesita HTTPS și codecuri compatibile.
+Ai nevoie de Node.js 24 sau mai nou, spațiu liber și un calculator și televizor accesibile în aceeași rețea. Detectarea automată a contului acceptă Stremio 5 pentru macOS. Linux folosesc o listă manuală de addonuri. Android TV, Google TV și Fire TV sunt țintele principale; alți clienți pot necesita HTTPS și codecuri compatibile.
 
 ## Instalarea serverului
 
-Rulați npm run setup pentru a genera config.json și a configura pornirea pe macOS, Linux sau Windows. Pe macOS, conectați Stremio 5 la contul TV-ului; pe Linux/Windows, introduceți URL-urile addonurilor în asistent. --yes acceptă valorile implicite, --no-service salvează doar configurația, iar --lang alege limba. Tokenurile și descărcările existente sunt păstrate.
+Rulați npm run setup pentru a genera config.json și a configura pornirea pe macOS, Linux. Pe macOS, conectați Stremio 5 la contul TV-ului; pe Linux, introduceți URL-urile addonurilor în asistent. --yes acceptă valorile implicite, --no-service salvează doar configurația, iar --lang alege limba. Tokenurile și descărcările existente sunt păstrate.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

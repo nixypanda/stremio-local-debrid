@@ -12,11 +12,11 @@ Tenaren spør installerte tillegg om kjelder og tek vare på innstillingane deir
 
 ## Krav
 
-Bruk Node.js 24 eller nyare, ledig diskplass og ei datamaskin og ein TV som når kvarandre på same nettverk. Automatisk kontooppdaging støttar Stremio 5 for macOS. Linux og Windows brukar ei manuell tilleggsliste. Android TV, Google TV og Fire TV er hovudmåla; andre klientar kan krevje HTTPS og kompatible kodekar.
+Bruk Node.js 24 eller nyare, ledig diskplass og ei datamaskin og ein TV som når kvarandre på same nettverk. Automatisk kontooppdaging støttar Stremio 5 for macOS. Linux brukar ei manuell tilleggsliste. Android TV, Google TV og Fire TV er hovudmåla; andre klientar kan krevje HTTPS og kompatible kodekar.
 
 ## Installer tenaren
 
-Køyr npm run setup for å lage config.json og setje opp oppstart på macOS, Linux eller Windows. Logg inn i Stremio 5 på macOS med TV-kontoen; skriv tilleggsadressene i vegvisaren på Linux/Windows. --yes godtek standardverdiane, --no-service lagrar berre konfigurasjonen, og --lang vel språk. Eksisterande token og nedlastingar vert tekne vare på.
+Køyr npm run setup for å lage config.json og setje opp oppstart på macOS, Linux. Logg inn i Stremio 5 på macOS med TV-kontoen; skriv tilleggsadressene i vegvisaren på Linux. --yes godtek standardverdiane, --no-service lagrar berre konfigurasjonen, og --lang vel språk. Eksisterande token og nedlastingar vert tekne vare på.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

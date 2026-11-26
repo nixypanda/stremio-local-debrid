@@ -12,11 +12,11 @@
 
 ## 需求
 
-需要 Node.js 24 或更新版本、足夠的磁碟空間，以及在同一可互通網路中的電腦和電視。帳號自動偵測支援 macOS 的 Stremio 5。Linux 與 Windows 使用手動附加元件清單。主要支援 Android TV、Google TV 及 Fire TV；其他用戶端可能需要 HTTPS 和相容的編解碼器。
+需要 Node.js 24 或更新版本、足夠的磁碟空間，以及在同一可互通網路中的電腦和電視。帳號自動偵測支援 macOS 的 Stremio 5。Linux 使用手動附加元件清單。主要支援 Android TV、Google TV 及 Fire TV；其他用戶端可能需要 HTTPS 和相容的編解碼器。
 
 ## 設定伺服器
 
-執行 npm run setup 產生 config.json 並設定 macOS、Linux 或 Windows 的啟動方式。在 macOS 上用電視的帳號登入 Stremio 5；在 Linux/Windows 上將附加元件 URL 輸入精靈。--yes 接受預設值，--no-service 只儲存設定，--lang 選擇語言。現有權杖和下載內容會保留。
+執行 npm run setup 產生 config.json 並設定 macOS、Linux 的啟動方式。在 macOS 上用電視的帳號登入 Stremio 5；在 Linux 上將附加元件 URL 輸入精靈。--yes 接受預設值，--no-service 只儲存設定，--lang 選擇語言。現有權杖和下載內容會保留。
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

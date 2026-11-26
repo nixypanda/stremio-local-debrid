@@ -32,7 +32,7 @@ buildNpmPackage {
   };
 
   nodejs = nodejs_24;
-  npmDepsHash = "sha256-WEqiUuMuzYOxDfQkJYzuX413eNnovzD8iwK1AICIEzo=";
+  npmDepsHash = "sha256-awGLE+igRU3z8awcW5iXVXcr8vnKY+Pj02GZbKjFFCU=";
   # Match .npmrc explicitly: npm hooks may supply their own command-line flags.
   npmFlags = [
     "--ignore-scripts"

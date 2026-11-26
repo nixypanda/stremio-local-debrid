@@ -12,11 +12,11 @@ Palvelin kysyy lähteitä asennetuilta lisäosilta ja säilyttää niiden asetuk
 
 ## Vaatimukset
 
-Tarvitset Node.js 24:n tai uudemman, vapaata levytilaa sekä tietokoneen ja television, jotka tavoittavat toisensa samassa verkossa. Tilin automaattinen tunnistus toimii macOS:n Stremio 5:ssä. Linux ja Windows käyttävät käsin määritettyä lisäosaluetteloa. Android TV, Google TV ja Fire TV ovat ensisijaiset laitteet; muut asiakkaat voivat vaatia HTTPS:n ja sopivat koodekit.
+Tarvitset Node.js 24:n tai uudemman, vapaata levytilaa sekä tietokoneen ja television, jotka tavoittavat toisensa samassa verkossa. Tilin automaattinen tunnistus toimii macOS:n Stremio 5:ssä. Linux käyttävät käsin määritettyä lisäosaluetteloa. Android TV, Google TV ja Fire TV ovat ensisijaiset laitteet; muut asiakkaat voivat vaatia HTTPS:n ja sopivat koodekit.
 
 ## Palvelimen asennus
 
-Luo config.json ja määritä käynnistys macOS-, Linux- tai Windows-järjestelmässä komennolla npm run setup. Kirjaudu macOS:n Stremio 5:een TV:n tilillä; syötä Linuxissa/Windowsissa lisäosien URL-osoitteet ohjattuun asennukseen. --yes hyväksyy oletukset, --no-service tallentaa vain asetukset ja --lang valitsee kielen. Nykyiset tunnisteet ja lataukset säilyvät.
+Luo config.json ja määritä käynnistys macOS-, Linux-järjestelmässä komennolla npm run setup. Kirjaudu macOS:n Stremio 5:een TV:n tilillä; syötä Linuxissa lisäosien URL-osoitteet ohjattuun asennukseen. --yes hyväksyy oletukset, --no-service tallentaa vain asetukset ja --lang valitsee kielen. Nykyiset tunnisteet ja lataukset säilyvät.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

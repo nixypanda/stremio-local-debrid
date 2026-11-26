@@ -33,6 +33,6 @@ export async function prepareConfig(directory = root, stateDirectory, values = {
   await writeFile(join(directory, 'config.json'), JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
   await writeFile(join(config.stateDir, 'addon-url.txt'), `${config.baseUrl}/${config.token}/manifest.json\n`, { mode: 0o600 });
   await writeFile(join(config.stateDir, 'status-url.txt'), `${config.baseUrl}/${config.token}/\n`, { mode: 0o600 });
-  if (process.platform !== 'win32') for (const file of [join(directory, 'config.json'), join(config.stateDir, 'addon-url.txt'), join(config.stateDir, 'status-url.txt')]) await chmod(file, 0o600);
+  for (const file of [join(directory, 'config.json'), join(config.stateDir, 'addon-url.txt'), join(config.stateDir, 'status-url.txt')]) await chmod(file, 0o600);
   return config;
 }

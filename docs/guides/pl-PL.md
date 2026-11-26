@@ -12,11 +12,11 @@ Serwer pyta zainstalowane dodatki o źródła, zachowując ich konfigurację. Ha
 
 ## Wymagania
 
-Potrzebujesz Node.js 24 lub nowszego, wolnego miejsca oraz komputera i telewizora osiągalnych w tej samej sieci. Automatyczne wykrywanie konta obsługuje Stremio 5 na macOS. Linux i Windows używają ręcznej listy dodatków. Główne urządzenia to Android TV, Google TV i Fire TV; inne klienty mogą wymagać HTTPS i odpowiednich kodeków.
+Potrzebujesz Node.js 24 lub nowszego, wolnego miejsca oraz komputera i telewizora osiągalnych w tej samej sieci. Automatyczne wykrywanie konta obsługuje Stremio 5 na macOS. Linux używają ręcznej listy dodatków. Główne urządzenia to Android TV, Google TV i Fire TV; inne klienty mogą wymagać HTTPS i odpowiednich kodeków.
 
 ## Instalacja serwera
 
-Uruchom npm run setup, aby utworzyć config.json i skonfigurować uruchamianie w macOS, Linux lub Windows. W macOS zaloguj się do Stremio 5 kontem telewizora; w Linux/Windows wpisz adresy URL dodatków w kreatorze. --yes akceptuje ustawienia domyślne, --no-service zapisuje tylko konfigurację, a --lang wybiera język. Istniejące tokeny i pobrane pliki zostają zachowane.
+Uruchom npm run setup, aby utworzyć config.json i skonfigurować uruchamianie w macOS, Linux. W macOS zaloguj się do Stremio 5 kontem telewizora; w Linux wpisz adresy URL dodatków w kreatorze. --yes akceptuje ustawienia domyślne, --no-service zapisuje tylko konfigurację, a --lang wybiera język. Istniejące tokeny i pobrane pliki zostają zachowane.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

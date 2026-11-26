@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Yêu cầu",
-      "body": "Cần Node.js 24 trở lên, đủ dung lượng trống, máy tính và TV trong cùng mạng có thể kết nối. Tự động phát hiện tài khoản hỗ trợ Stremio 5 trên macOS. Linux và Windows dùng danh sách tiện ích nhập thủ công. Android TV, Google TV và Fire TV là mục tiêu chính; ứng dụng khác có thể cần HTTPS và codec tương thích."
+      "body": "Cần Node.js 24 trở lên, đủ dung lượng trống, máy tính và TV trong cùng mạng có thể kết nối. Tự động phát hiện tài khoản hỗ trợ Stremio 5 trên macOS. Linux dùng danh sách tiện ích nhập thủ công. Android TV, Google TV và Fire TV là mục tiêu chính; ứng dụng khác có thể cần HTTPS và codec tương thích."
     },
     "setup": {
       "title": "Thiết lập máy chủ",
-      "body": "Chạy npm run setup để tạo config.json và cấu hình khởi động trên macOS, Linux hoặc Windows. Trên macOS, đăng nhập Stremio 5 bằng tài khoản TV; trên Linux/Windows, nhập URL addon trong trình hướng dẫn. --yes chấp nhận mặc định, --no-service chỉ lưu cấu hình và --lang chọn ngôn ngữ. Token và nội dung đã tải được giữ nguyên."
+      "body": "Chạy npm run setup để tạo config.json và cấu hình khởi động trên macOS, Linux. Trên macOS, đăng nhập Stremio 5 bằng tài khoản TV; trên Linux, nhập URL addon trong trình hướng dẫn. --yes chấp nhận mặc định, --no-service chỉ lưu cấu hình và --lang chọn ngôn ngữ. Token và nội dung đã tải được giữ nguyên."
     },
     "connect": {
       "title": "Kết nối TV",
@@ -76,7 +76,7 @@
     "ready": "Máy chủ sẵn sàng",
     "cancelled": "Đã hủy thiết lập",
     "connect": "Mở địa chỉ trong status-url.txt và chọn Cài vào Stremio.",
-    "help": "Chạy npm run setup để tạo config.json và cấu hình khởi động trên macOS, Linux hoặc Windows. Trên macOS, đăng nhập Stremio 5 bằng tài khoản TV; trên Linux/Windows, nhập URL addon trong trình hướng dẫn. --yes chấp nhận mặc định, --no-service chỉ lưu cấu hình và --lang chọn ngôn ngữ. Token và nội dung đã tải được giữ nguyên.",
+    "help": "Chạy npm run setup để tạo config.json và cấu hình khởi động trên macOS, Linux. Trên macOS, đăng nhập Stremio 5 bằng tài khoản TV; trên Linux, nhập URL addon trong trình hướng dẫn. --yes chấp nhận mặc định, --no-service chỉ lưu cấu hình và --lang chọn ngôn ngữ. Token và nội dung đã tải được giữ nguyên.",
     "nonInteractive": "Dùng terminal để thiết lập tương tác hoặc --yes để chấp nhận mặc định."
   }
 }

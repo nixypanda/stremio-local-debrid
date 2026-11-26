@@ -262,13 +262,11 @@ test('missing, truncated, incomplete and unsafe cache files fall back to the tor
   const outside = join(directory, 'outside.mp4');
   await writeFile(outside, randomBytes(4096));
   await addCase('f'.repeat(40), 'outside.mp4', 4096, async job => { job.path = outside; });
-  if (process.platform !== 'win32') {
-    const target = join(directory, 'symlink-target.mp4');
-    await writeFile(target, randomBytes(4096));
-    await addCase('1'.repeat(40), 'link.mp4', 4096, async job => {
-      await symlink(target, job.path);
-    });
-  }
+  const target = join(directory, 'symlink-target.mp4');
+  await writeFile(target, randomBytes(4096));
+  await addCase('1'.repeat(40), 'link.mp4', 4096, async job => {
+    await symlink(target, job.path);
+  });
   await addCase('2'.repeat(40), 'not-incomplete.mp4', 4096, async job => {
     job.status = 'error';
     await writeFile(job.path, randomBytes(4096));

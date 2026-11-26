@@ -12,11 +12,11 @@
 
 ## 必要なもの
 
-Node.js 24以降、十分な空き容量、相互に接続できる同じネットワーク上のパソコンとテレビが必要です。アカウントの自動検出はmacOSのStremio 5に対応します。LinuxとWindowsではアドオンを手動で指定します。主な対象はAndroid TV、Google TV、Fire TVです。他のクライアントではHTTPSや対応コーデックが必要な場合があります。
+Node.js 24以降、十分な空き容量、相互に接続できる同じネットワーク上のパソコンとテレビが必要です。アカウントの自動検出はmacOSのStremio 5に対応します。Linuxではアドオンを手動で指定します。主な対象はAndroid TV、Google TV、Fire TVです。他のクライアントではHTTPSや対応コーデックが必要な場合があります。
 
 ## サーバーの設定
 
-npm run setupを実行するとconfig.jsonを作成し、macOS、Linux、Windowsで起動を設定できます。macOSではテレビと同じアカウントでStremio 5にログインし、Linux/WindowsではウィザードにアドオンURLを入力してください。--yesは既定値を使用し、--no-serviceは設定のみを保存し、--langは言語を選択します。既存のトークンとダウンロードは保持されます。
+npm run setupを実行するとconfig.jsonを作成し、macOS、Linuxで起動を設定できます。macOSではテレビと同じアカウントでStremio 5にログインし、LinuxではウィザードにアドオンURLを入力してください。--yesは既定値を使用し、--no-serviceは設定のみを保存し、--langは言語を選択します。既存のトークンとダウンロードは保持されます。
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

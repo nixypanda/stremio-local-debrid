@@ -12,11 +12,11 @@ De server vraagt geïnstalleerde addons om bronnen en behoudt hun instellingen. 
 
 ## Vereisten
 
-Gebruik Node.js 24 of nieuwer, voldoende schijfruimte en een computer en tv die elkaar op hetzelfde netwerk kunnen bereiken. Automatische accountdetectie werkt met Stremio 5 voor macOS. Linux en Windows gebruiken een handmatige addonlijst. Android TV, Google TV en Fire TV zijn de voornaamste doelen; andere clients kunnen HTTPS en geschikte codecs vereisen.
+Gebruik Node.js 24 of nieuwer, voldoende schijfruimte en een computer en tv die elkaar op hetzelfde netwerk kunnen bereiken. Automatische accountdetectie werkt met Stremio 5 voor macOS. Linux gebruiken een handmatige addonlijst. Android TV, Google TV en Fire TV zijn de voornaamste doelen; andere clients kunnen HTTPS en geschikte codecs vereisen.
 
 ## Server installeren
 
-Voer npm run setup uit om config.json te maken en opstarten in macOS, Linux of Windows in te stellen. Meld Stremio 5 op macOS aan met het TV-account; voer op Linux/Windows de addon-URL's in de wizard in. --yes accepteert de standaardwaarden, --no-service slaat alleen de configuratie op en --lang kiest de taal. Bestaande tokens en downloads blijven behouden.
+Voer npm run setup uit om config.json te maken en opstarten in macOS, Linux in te stellen. Meld Stremio 5 op macOS aan met het TV-account; voer op Linux de addon-URL's in de wizard in. --yes accepteert de standaardwaarden, --no-service slaat alleen de configuratie op en --lang kiest de taal. Bestaande tokens en downloads blijven behouden.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

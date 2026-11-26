@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Requirements",
-      "body": "Use Node.js 24 or later, enough free disk space and a computer and TV on the same reachable network. Automatic account discovery supports Stremio 5 for macOS. Linux and Windows can run the server with a manual addon list. Android TV, Google TV and Fire TV are the primary playback targets; other clients may require HTTPS and compatible codecs."
+      "body": "Use Node.js 24 or later, enough free disk space and a computer and TV on the same reachable network. Automatic account discovery supports Stremio 5 for macOS. Linux can run the server with a manual addon list. Android TV, Google TV and Fire TV are the primary playback targets; other clients may require HTTPS and compatible codecs."
     },
     "setup": {
       "title": "Set up the server",
-      "body": "Run npm run setup to generate config.json and configure startup on macOS, Linux or Windows. On macOS, sign in to Stremio 5 with the TV's account; on Linux/Windows, enter addon URLs in the wizard. --yes accepts defaults, --no-service only saves configuration, and --lang selects a language. Existing tokens and downloads are preserved."
+      "body": "Run npm run setup to generate config.json and configure startup on macOS, Linux. On macOS, sign in to Stremio 5 with the TV's account; on Linux, enter addon URLs in the wizard. --yes accepts defaults, --no-service only saves configuration, and --lang selects a language. Existing tokens and downloads are preserved."
     },
     "connect": {
       "title": "Connect the TV",
@@ -76,7 +76,7 @@
     "ready": "Server ready",
     "cancelled": "Setup cancelled",
     "connect": "Open the address in status-url.txt and choose Install in Stremio.",
-    "help": "Run npm run setup to generate config.json and configure startup on macOS, Linux or Windows. On macOS, sign in to Stremio 5 with the TV's account; on Linux/Windows, enter addon URLs in the wizard. --yes accepts defaults, --no-service only saves configuration, and --lang selects a language. Existing tokens and downloads are preserved.",
+    "help": "Run npm run setup to generate config.json and configure startup on macOS, Linux. On macOS, sign in to Stremio 5 with the TV's account; on Linux, enter addon URLs in the wizard. --yes accepts defaults, --no-service only saves configuration, and --lang selects a language. Existing tokens and downloads are preserved.",
     "nonInteractive": "Use a terminal for interactive setup, or pass --yes to accept defaults."
   }
 }

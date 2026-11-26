@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Requisiti",
-      "body": "Servono Node.js 24 o successivo, spazio libero su disco e computer e TV raggiungibili nella stessa rete. Il rilevamento automatico dell’account supporta Stremio 5 per macOS. Linux e Windows usano un elenco manuale di addon. Android TV, Google TV e Fire TV sono i dispositivi principali; altri client possono richiedere HTTPS e codec compatibili."
+      "body": "Servono Node.js 24 o successivo, spazio libero su disco e computer e TV raggiungibili nella stessa rete. Il rilevamento automatico dell’account supporta Stremio 5 per macOS. Linux usano un elenco manuale di addon. Android TV, Google TV e Fire TV sono i dispositivi principali; altri client possono richiedere HTTPS e codec compatibili."
     },
     "setup": {
       "title": "Configurare il server",
-      "body": "Esegui npm run setup per generare config.json e configurare l'avvio su macOS, Linux o Windows. Su macOS, accedi a Stremio 5 con l'account della TV; su Linux/Windows, inserisci gli URL degli addon nell'assistente. --yes accetta i valori predefiniti, --no-service salva solo la configurazione e --lang sceglie la lingua. Token e download esistenti vengono conservati."
+      "body": "Esegui npm run setup per generare config.json e configurare l'avvio su macOS, Linux. Su macOS, accedi a Stremio 5 con l'account della TV; su Linux, inserisci gli URL degli addon nell'assistente. --yes accetta i valori predefiniti, --no-service salva solo la configurazione e --lang sceglie la lingua. Token e download esistenti vengono conservati."
     },
     "connect": {
       "title": "Collegare la TV",
@@ -76,7 +76,7 @@
     "ready": "Server pronto",
     "cancelled": "Configurazione annullata",
     "connect": "Apri l'indirizzo in status-url.txt e scegli Installa in Stremio.",
-    "help": "Esegui npm run setup per generare config.json e configurare l'avvio su macOS, Linux o Windows. Su macOS, accedi a Stremio 5 con l'account della TV; su Linux/Windows, inserisci gli URL degli addon nell'assistente. --yes accetta i valori predefiniti, --no-service salva solo la configurazione e --lang sceglie la lingua. Token e download esistenti vengono conservati.",
+    "help": "Esegui npm run setup per generare config.json e configurare l'avvio su macOS, Linux. Su macOS, accedi a Stremio 5 con l'account della TV; su Linux, inserisci gli URL degli addon nell'assistente. --yes accetta i valori predefiniti, --no-service salva solo la configurazione e --lang sceglie la lingua. Token e download esistenti vengono conservati.",
     "nonInteractive": "Usa un terminale per la configurazione interattiva oppure --yes per accettare i valori predefiniti."
   }
 }

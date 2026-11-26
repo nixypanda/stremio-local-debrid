@@ -37,7 +37,7 @@ test('wizard validates answers, saves manual URLs without disclosure and preserv
     assert.ok(!printed.includes(token));
     assert.ok(!printed.includes(manifestUrl));
     assert.equal((await readFile(join(directory, 'state', 'addon-url.txt'), 'utf8')).trim(), `${config.baseUrl}/${token}/manifest.json`);
-    if (process.platform !== 'win32') assert.equal((await stat(join(directory, 'config.json'))).mode & 0o777, 0o600);
+    assert.equal((await stat(join(directory, 'config.json'))).mode & 0o777, 0o600);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 

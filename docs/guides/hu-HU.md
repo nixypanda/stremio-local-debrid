@@ -12,11 +12,11 @@ A kiszolgáló a telepített bővítményektől kér forrásokat, megtartva beá
 
 ## Követelmények
 
-Node.js 24 vagy újabb, szabad lemezterület és egymást elérő számítógép és tévé kell ugyanazon a hálózaton. Az automatikus fiókfelderítés a macOS Stremio 5-öt támogatja. Linux és Windows kézi bővítménylistát használ. Fő célok: Android TV, Google TV és Fire TV; más kliensek HTTPS-t és megfelelő kodekeket kérhetnek.
+Node.js 24 vagy újabb, szabad lemezterület és egymást elérő számítógép és tévé kell ugyanazon a hálózaton. Az automatikus fiókfelderítés a macOS Stremio 5-öt támogatja. Linux kézi bővítménylistát használ. Fő célok: Android TV, Google TV és Fire TV; más kliensek HTTPS-t és megfelelő kodekeket kérhetnek.
 
 ## Kiszolgáló telepítése
 
-Futtassa az npm run setup parancsot a config.json létrehozásához és az indítás beállításához macOS, Linux vagy Windows rendszeren. macOS-en jelentkezzen be a Stremio 5-be a TV fiókjával; Linux/Windowson adja meg a bővítmények URL-jeit a varázslóban. A --yes elfogadja az alapértékeket, a --no-service csak a beállítást menti, a --lang pedig nyelvet választ. A meglévő tokenek és letöltések megmaradnak.
+Futtassa az npm run setup parancsot a config.json létrehozásához és az indítás beállításához macOS, Linux rendszeren. macOS-en jelentkezzen be a Stremio 5-be a TV fiókjával; Linuxon adja meg a bővítmények URL-jeit a varázslóban. A --yes elfogadja az alapértékeket, a --no-service csak a beállítást menti, a --lang pedig nyelvet választ. A meglévő tokenek és letöltések megmaradnak.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git

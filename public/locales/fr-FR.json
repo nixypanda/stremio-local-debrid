@@ -26,11 +26,11 @@
     },
     "requirements": {
       "title": "Prérequis",
-      "body": "Utilisez Node.js 24 ou plus récent, suffisamment d’espace disque et un ordinateur et un téléviseur pouvant communiquer sur le même réseau. La découverte automatique fonctionne avec Stremio 5 pour macOS. Linux et Windows utilisent une liste manuelle d’extensions. Android TV, Google TV et Fire TV sont les appareils principalement visés ; d’autres clients peuvent nécessiter HTTPS et des codecs compatibles."
+      "body": "Utilisez Node.js 24 ou plus récent, suffisamment d’espace disque et un ordinateur et un téléviseur pouvant communiquer sur le même réseau. La découverte automatique fonctionne avec Stremio 5 pour macOS. Linux utilisent une liste manuelle d’extensions. Android TV, Google TV et Fire TV sont les appareils principalement visés ; d’autres clients peuvent nécessiter HTTPS et des codecs compatibles."
     },
     "setup": {
       "title": "Configurer le serveur",
-      "body": "Exécutez npm run setup pour générer config.json et configurer le démarrage sur macOS, Linux ou Windows. Sur macOS, connectez Stremio 5 au compte de la TV ; sur Linux/Windows, saisissez les URL des addons dans l'assistant. --yes accepte les valeurs par défaut, --no-service enregistre uniquement la configuration et --lang choisit la langue. Les tokens et téléchargements existants sont conservés."
+      "body": "Exécutez npm run setup pour générer config.json et configurer le démarrage sur macOS, Linux. Sur macOS, connectez Stremio 5 au compte de la TV ; sur Linux, saisissez les URL des addons dans l'assistant. --yes accepte les valeurs par défaut, --no-service enregistre uniquement la configuration et --lang choisit la langue. Les tokens et téléchargements existants sont conservés."
     },
     "connect": {
       "title": "Connecter le téléviseur",
@@ -76,7 +76,7 @@
     "ready": "Serveur prêt",
     "cancelled": "Configuration annulée",
     "connect": "Ouvrez l'adresse dans status-url.txt et choisissez Installer dans Stremio.",
-    "help": "Exécutez npm run setup pour générer config.json et configurer le démarrage sur macOS, Linux ou Windows. Sur macOS, connectez Stremio 5 au compte de la TV ; sur Linux/Windows, saisissez les URL des addons dans l'assistant. --yes accepte les valeurs par défaut, --no-service enregistre uniquement la configuration et --lang choisit la langue. Les tokens et téléchargements existants sont conservés.",
+    "help": "Exécutez npm run setup pour générer config.json et configurer le démarrage sur macOS, Linux. Sur macOS, connectez Stremio 5 au compte de la TV ; sur Linux, saisissez les URL des addons dans l'assistant. --yes accepte les valeurs par défaut, --no-service enregistre uniquement la configuration et --lang choisit la langue. Les tokens et téléchargements existants sont conservés.",
     "nonInteractive": "Utilisez un terminal pour la configuration interactive ou ajoutez --yes pour accepter les valeurs par défaut."
   }
 }

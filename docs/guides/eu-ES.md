@@ -12,11 +12,11 @@ Zerbitzariak instalatutako gehigarriei iturriak eskatzen dizkie eta haien konfig
 
 ## Eskakizunak
 
-Node.js 24 edo berriagoa, diskoan leku librea eta sare berean elkarri iristeko gai diren ordenagailua eta telebista behar dira. Kontuaren detekzio automatikoak macOS-erako Stremio 5 onartzen du. Linux eta Windows-ek eskuzko gehigarri-zerrenda erabiltzen dute. Helburu nagusiak Android TV, Google TV eta Fire TV dira; beste bezeroek HTTPS eta codec bateragarriak eska ditzakete.
+Node.js 24 edo berriagoa, diskoan leku librea eta sare berean elkarri iristeko gai diren ordenagailua eta telebista behar dira. Kontuaren detekzio automatikoak macOS-erako Stremio 5 onartzen du. Linux-ek eskuzko gehigarri-zerrenda erabiltzen dute. Helburu nagusiak Android TV, Google TV eta Fire TV dira; beste bezeroek HTTPS eta codec bateragarriak eska ditzakete.
 
 ## Zerbitzaria instalatu
 
-Exekutatu npm run setup config.json sortzeko eta macOS, Linux edo Windowsen abioa konfiguratzeko. macOSen, hasi saioa Stremio 5en telebistako kontuarekin; Linux/Windowsen, sartu gehigarrien URLak morroian. --yes aukerak lehenetsiak onartzen ditu, --no-service aukerak konfigurazioa bakarrik gordetzen du eta --lang aukerak hizkuntza hautatzen du. Dauden tokenak eta deskargak mantentzen dira.
+Exekutatu npm run setup config.json sortzeko eta macOS, Linuxen abioa konfiguratzeko. macOSen, hasi saioa Stremio 5en telebistako kontuarekin; Linuxen, sartu gehigarrien URLak morroian. --yes aukerak lehenetsiak onartzen ditu, --no-service aukerak konfigurazioa bakarrik gordetzen du eta --lang aukerak hizkuntza hautatzen du. Dauden tokenak eta deskargak mantentzen dira.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git
