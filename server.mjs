@@ -72,7 +72,7 @@ export async function createService(config, options = {}) {
   await mkdir(cacheDir, { recursive: true, mode: 0o700 });
   await mkdir(join(stateDir, 'torrents'), { recursive: true, mode: 0o700 });
   const addonSources = await createAddonSources({ ...config, stateDir }, options.addons);
-  const client = options.client || new WebTorrent({ utp: false, natUpnp: false, natPmp: false, maxConns: 80, uploadLimit: 1048576, seedOutgoingConnections: false });
+  const client = options.client || new WebTorrent({ tracker: { wrtc: false }, utp: false, natUpnp: false, natPmp: false, maxConns: 80, uploadLimit: 1048576, seedOutgoingConnections: false });
   client.on('error', error => console.error('BitTorrent:', error.message));
   const entries = new Map();
   const jobs = new Map();
@@ -672,7 +672,7 @@ export async function createService(config, options = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const config = JSON.parse(await readFile(join(root, 'config.json'), 'utf8'));
+  const config = JSON.parse(await readFile(process.env.STREMIO_LOCAL_DEBRID_CONFIG || join(root, 'config.json'), 'utf8'));
   const service = await createService(config);
   console.log(`Cache Local disponível em ${config.baseUrl}`);
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => void service.close().then(() => process.exit(0)));

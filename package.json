@@ -25,5 +25,8 @@
   "dependencies": {
     "parse-torrent": "11.0.24",
     "webtorrent": "3.0.21"
+  },
+  "overrides": {
+    "@thaunknown/simple-peer": "9.12.1"
   }
 }
