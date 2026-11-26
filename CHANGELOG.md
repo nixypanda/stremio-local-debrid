@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make the project English-only: remove translations, language selection, locale-prefixed URLs, and translation tooling. Existing language-prefixed addon installations must be reinstalled with the plain manifest URL.
+
 - Drop Windows server support, Task Scheduler integration, and Windows CI. Server installations now support macOS and Linux only.
 - Bound server-test startup and shutdown, and stop child processes before deleting temporary working directories.
 

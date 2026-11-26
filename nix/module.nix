@@ -81,7 +81,6 @@ in
       minFreeBytes = lib.mkDefault (10 * 1024 * 1024 * 1024);
       autoDiscoverAddons = lib.mkDefault false;
       preventSleep = lib.mkDefault false;
-      language = lib.mkDefault "en-US";
       sources = lib.mkDefault [ ];
     };
     users.groups.${cfg.group} = { };

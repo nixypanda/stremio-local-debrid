@@ -14,7 +14,7 @@ test('setup generates private URLs and preserves existing identity, configuratio
     await writeFile(join(directory, 'config.json'), JSON.stringify({ baseUrl: 'http://127.0.0.1:7810', cacheDir: join(directory, 'media'), language: 'pt_PT', autoDiscoverAddons: false, sources: [{ name: 'Provider', manifestUrl: 'https://addon.example/configuration/manifest.json' }] }));
     const initial = await prepareConfig(directory, state);
     assert.match(initial.token, /^[a-f0-9]{48}$/);
-    assert.equal(initial.language, 'pt-PT');
+    assert.equal(initial.language, undefined);
     assert.equal((await readFile(join(state, 'addon-url.txt'), 'utf8')).trim(), `${initial.baseUrl}/${initial.token}/manifest.json`);
     await writeFile(join(state, 'downloads.json'), '[{"synthetic":"retained"}]');
     const again = await prepareConfig(directory, state);

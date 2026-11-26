@@ -21,6 +21,7 @@ export async function prepareHeadless(settings, tokenFile) {
   if (!/^[A-Za-z0-9_-]+$/.test(token)) throw new Error('Token must be nonempty and URL-safe');
   const baseUrl = settings.baseUrl.replace(/\/+$/, '');
   const config = { ...settings, baseUrl, token };
+  delete config.language;
   const files = {
     'config.json': JSON.stringify(config, null, 2) + '\n',
     'addon-url.txt': `${baseUrl}/${token}/manifest.json\n`,

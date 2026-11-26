@@ -18,7 +18,7 @@ buildNpmPackage {
         ../package-lock.json
         ../LICENSE.md
         ../CREDITS.md
-        ../locales
+        ../messages.json
         ../public/assets
         ../scripts
         ../test

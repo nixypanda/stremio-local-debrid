@@ -22,9 +22,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run check:locales
       - run: npm run build:docs
-      - run: git diff --exit-code -- docs public/locales public/configure
+      - run: git diff --exit-code -- docs public/configure
       - run: npm test
   nix:
     strategy:

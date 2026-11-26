@@ -13,7 +13,7 @@ import { createService } from '../server.mjs';
 const engineOptions = { dht: false, tracker: false, lsd: false, utp: false, natUpnp: false, natPmp: false };
 const descriptor = stream => JSON.parse(Buffer.from(stream.url.split('/play/')[1].split('.')[0], 'base64url').toString());
 
-test('lê o perfil WebKit sem alterar o banco ou carregar outros dados da conta', async () => {
+test('reads the WebKit profile without changing the database or loading other account data', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'stremio-profile-test-'));
   const storage = join(directory, 'origin', 'origin', 'LocalStorage');
   await mkdir(storage, { recursive: true });
@@ -31,7 +31,7 @@ test('lê o perfil WebKit sem alterar o banco ou carregar outros dados da conta'
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('sincroniza todos os addons, preserva configuração, filtra streams e acompanha instalação e remoção', { timeout: 10000 }, async () => {
+test('synchronizes addons, preserves configuration, filters streams and tracks installation and removal', { timeout: 10000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'stremio-discovery-test-'));
   const seed = new WebTorrent(engineOptions);
   const torrent = await new Promise((done, reject) => { seed.once('error', reject); seed.seed(Buffer.from('synthetic video'), { name: 'test.mp4', private: true, announce: ['udp://private.example.test:80/announce'] }, done); });
@@ -91,7 +91,7 @@ test('sincroniza todos os addons, preserva configuração, filtra streams e acom
   const service = await createService(config, { client: new WebTorrent(engineOptions), addons: { readProfile: async () => ({ authKey: 'test-session', addons: [first, ...ignored] }), apiUrl: `${base}/api/addons` } });
   const waitFor = async predicate => {
     const until = Date.now() + 2000;
-    while (!predicate()) { assert.ok(Date.now() < until, 'A lista não foi sincronizada'); await delay(10); }
+    while (!predicate()) { assert.ok(Date.now() < until, 'The addon list was not synchronized'); await delay(10); }
   };
   try {
     let result = await service.getStreams('movie', 'tt123');

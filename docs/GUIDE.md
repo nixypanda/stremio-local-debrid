@@ -1,4 +1,4 @@
-# Stremio Local Debrid — English
+# Stremio Local Debrid — Installation guide
 
 Your computer downloads and caches torrents from your Stremio addons, then streams them to your TV over your local network.
 
@@ -16,7 +16,7 @@ Use Node.js 24 or later, enough free disk space and a computer and TV on the sam
 
 ## Set up the server
 
-Run npm run setup to generate config.json and configure startup on macOS, Linux. On macOS, sign in to Stremio 5 with the TV's account; on Linux, enter addon URLs in the wizard. --yes accepts defaults, --no-service only saves configuration, and --lang selects a language. Existing tokens and downloads are preserved.
+Run npm run setup to generate config.json and configure startup on macOS or Linux. On macOS, sign in to Stremio 5 with the TV's account; on Linux, enter addon URLs in the wizard. --yes accepts defaults and --no-service only saves configuration. Existing tokens and downloads are preserved.
 
 ```sh
 git clone https://github.com/origami-ltd/stremio-local-debrid.git
@@ -32,7 +32,7 @@ npm start
 
 ## Connect the TV
 
-Open the address saved in state/status-url.txt on the computer. Choose a language and click Install in Stremio, or copy the addon address into Stremio's addon installation field. Refresh addons or restart Stremio on the TV using the same account. Open a movie or episode and choose a Local Cache source. Original addon sources still use the device that opens them. New or removed account addons are synchronized every 60 seconds.
+Open the address saved in state/status-url.txt on the computer. Click Install in Stremio, or copy the addon address into Stremio's addon installation field. Refresh addons or restart Stremio on the TV using the same account. Open a movie or episode and choose a Local Cache source. Original addon sources still use the device that opens them. New or removed account addons are synchronized every 60 seconds.
 
 ## Cache and playback
 
@@ -42,4 +42,4 @@ Downloads continue after closing the player and resume after a server restart. O
 
 The addon URL contains an access token: keep it private and do not publish it in issues or screenshots. macOS account discovery reads the existing local profile and sends its session key only to the official Stremio API; the server does not save a copy of that key. Configured addon addresses are stored privately. This project includes no media catalog and no telemetry. BitTorrent peers can see the computer's IP. Use content you are entitled to access. The code uses MIT-PoU, which adds usage recording and credit requirements for automated systems.
 
-[Origami · GitHub](https://github.com/origami-ltd/stremio-local-debrid) · [MIT-PoU](../../LICENSE.md)
+[Origami · GitHub](https://github.com/origami-ltd/stremio-local-debrid) · [MIT-PoU](../LICENSE.md)

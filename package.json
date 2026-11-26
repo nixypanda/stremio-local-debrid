@@ -14,7 +14,6 @@
     "install:mac": "node install.mjs",
     "uninstall:service": "node uninstall.mjs",
     "build:docs": "node scripts/build-docs.mjs",
-    "check:locales": "node scripts/check-locales.mjs",
     "test": "node --test"
   },
   "description": "A self-hosted Stremio torrent cache that moves downloads from your TV to your computer.",

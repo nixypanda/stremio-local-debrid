@@ -36,9 +36,10 @@ test('headless configuration preserves identity, updates settings and keeps URLs
   const { settings } = await fixture(t);
   const first = await prepareHeadless(settings);
   assert.match(first.token, /^[a-f0-9]{48}$/);
-  const second = await prepareHeadless({ ...settings, prefetchEpisodes: 2 });
+  const second = await prepareHeadless({ ...settings, prefetchEpisodes: 2, language: 'pt-BR' });
   assert.equal(second.token, first.token);
   assert.equal(second.prefetchEpisodes, 2);
+  assert.equal(second.language, undefined);
   assert.equal(await readFile(join(settings.stateDir, 'addon-url.txt'), 'utf8'), `https://cache.example/${first.token}/manifest.json\n`);
   assert.deepEqual(JSON.parse(await readFile(join(settings.stateDir, 'config.json'), 'utf8')), second);
   for (const name of ['token', 'config.json', 'addon-url.txt', 'status-url.txt']) assert.equal((await stat(join(settings.stateDir, name))).mode & 0o777, 0o600);
