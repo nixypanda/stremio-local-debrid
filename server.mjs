@@ -11,7 +11,7 @@ import WebTorrent from 'webtorrent';
 import { createAddonSources, fetchAddonStreams, fetchAddonMeta } from './addons.mjs';
 import { torrentDescriptor } from './torrents.mjs';
 import { seriesId, followingEpisodes, meaningfulPlayback, evictionEligible } from './prefetch.mjs';
-import { locales, languageCode, translation } from './i18n.mjs';
+import text from './messages.json' with { type: 'json' };
 import { renderDashboard, renderGuide } from './ui.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
@@ -72,7 +72,7 @@ export async function createService(config, options = {}) {
   await mkdir(cacheDir, { recursive: true, mode: 0o700 });
   await mkdir(join(stateDir, 'torrents'), { recursive: true, mode: 0o700 });
   const addonSources = await createAddonSources({ ...config, stateDir }, options.addons);
-  const client = options.client || new WebTorrent({ utp: false, natUpnp: false, natPmp: false, maxConns: 80, uploadLimit: 1048576, seedOutgoingConnections: false });
+  const client = options.client || new WebTorrent({ tracker: { wrtc: false }, utp: false, natUpnp: false, natPmp: false, maxConns: 80, uploadLimit: 1048576, seedOutgoingConnections: false });
   client.on('error', error => console.error('BitTorrent:', error.message));
   const entries = new Map();
   const jobs = new Map();
@@ -99,7 +99,7 @@ export async function createService(config, options = {}) {
     if (active && !awake) {
       const child = spawn('/usr/bin/caffeinate', ['-i', '-w', String(process.pid)], { stdio: 'ignore' });
       awake = child;
-      child.on('error', error => console.error('Energia:', error.message));
+      child.on('error', error => console.error('Sleep prevention:', error.message));
       child.once('exit', () => { if (awake === child) awake = null; });
     } else if (!active && awake) { awake.kill(); awake = null; }
   };
@@ -120,7 +120,7 @@ export async function createService(config, options = {}) {
     saving = saving.then(async () => {
       await writeFile(join(stateDir, 'downloads.json.tmp'), content, { mode: 0o600 });
       await rename(join(stateDir, 'downloads.json.tmp'), join(stateDir, 'downloads.json'));
-    }).catch(error => console.error('Estado:', error.message));
+    }).catch(error => console.error('State:', error.message));
     return saving;
   };
   const persistPlayback = () => {
@@ -361,10 +361,10 @@ export async function createService(config, options = {}) {
     const downloaded = file?.done || job.status === 'complete' ? job.length : Math.max(0, file?.downloaded || 0);
     return { filename: job.filename, status: file?.done ? 'complete' : job.status, prefetch: !!job.prefetch, bytes: job.length, downloaded, progress: job.length ? downloaded / job.length : 0, peers: entry?.torrent?.numPeers || 0, speed: entry?.torrent?.downloadSpeed || 0, path: job.path, error: job.error };
   });
-  const defaults = translation(config.language);
+  const defaults = text;
   const manifest = { id: 'local.stremio.cache', version: '1.2.0', name: defaults.name, description: defaults.description, logo: `${config.baseUrl}/${config.token}/assets/logo.png`, resources: ['stream'], types: ['movie', 'series', 'anime', 'other'], catalogs: [], behaviorHints: { configurable: true, p2p: true } };
-  const getStreams = async (type, id, language = config.language) => {
-    const t = translation(language);
+  const getStreams = async (type, id) => {
+    const t = text;
     const stored = [...jobs.values()].filter(job => job.type === type && job.id === id && job.status === 'complete').map(job => {
       const descriptor = { infoHash: job.infoHash, fileIdx: job.fileIdx, sources: job.sources, webSeeds: job.webSeeds, private: job.private, filename: job.filename, sourceId: job.sourceId, type, id };
       return { name: `${t.name} ✓\n${t.cached}`, description: job.filename, url: playURL(descriptor), behaviorHints: { notWebReady: true, filename: job.filename, videoSize: job.length, bingeGroup: 'cache-local-stored' } };
@@ -384,7 +384,7 @@ export async function createService(config, options = {}) {
     const streams = [...stored];
     const seen = new Map(stored.map(stream => { const descriptor = decode(stream.url.split('/play/')[1].split('/')[0]); return [`${descriptor.infoHash}:${descriptor.fileIdx ?? -1}`, stream]; }));
     for (const [index, result] of results.entries()) {
-      if (result.status === 'rejected') { console.error('Fonte indisponível:', sources[index].name); continue; }
+      if (result.status === 'rejected') { console.error('Source unavailable:', sources[index].name); continue; }
       for (const stream of result.value) {
         const descriptor = decode(stream.url.split('/play/')[1].split('/')[0]);
         const key = `${descriptor.infoHash}:${descriptor.fileIdx ?? -1}`;
@@ -502,7 +502,7 @@ export async function createService(config, options = {}) {
   };
   const json = (res, status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
   const server = http.createServer(async (req, res) => {
-    let t = translation(config.language);
+    const t = text;
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
@@ -513,14 +513,11 @@ export async function createService(config, options = {}) {
       const requestURL = new URL(req.url, config.baseUrl);
       const path = requestURL.pathname.split('/').filter(Boolean);
       if (path[0] !== config.token) throw fault(404, 'notFound');
-      const prefixLanguage = locales[path[1]] ? path.splice(1, 1)[0] : null;
-      const language = languageCode(requestURL.searchParams.get('lang') || prefixLanguage || config.language || req.headers['accept-language']);
-      t = translation(language);
       if (!['GET', 'HEAD'].includes(req.method)) throw fault(405, 'invalidMethod');
-      if (path[1] === 'manifest.json') { json(res, 200, { ...manifest, name: t.name, description: t.description, types: [...new Set([...manifest.types, ...addonSources.status().sources.flatMap(source => source.types)])] }); return; }
+      if (path[1] === 'manifest.json' && path.length === 2) { json(res, 200, { ...manifest, types: [...new Set([...manifest.types, ...addonSources.status().sources.flatMap(source => source.types)])] }); return; }
       if (path[1] === 'downloads.json') { json(res, 200, { downloads: listDownloads(), cacheBytes: allocated(), cacheLimitBytes: config.maxCacheBytes }); return; }
       if (path[1] === 'sources.json') { await addonSources.refresh(); json(res, 200, addonSources.status()); return; }
-      if (path[1] === 'stream' && path.length === 4 && path[3].endsWith('.json')) { json(res, 200, await getStreams(decodeURIComponent(path[2]), decodeURIComponent(path[3].slice(0, -5)), language)); return; }
+      if (path[1] === 'stream' && path.length === 4 && path[3].endsWith('.json')) { json(res, 200, await getStreams(decodeURIComponent(path[2]), decodeURIComponent(path[3].slice(0, -5)))); return; }
       if (path[1] === 'assets' && ['logo.png', 'icon.svg', 'style.css'].includes(path[2]) && path.length === 3) {
         res.writeHead(200, { 'Content-Type': path[2].endsWith('.png') ? 'image/png' : path[2].endsWith('.svg') ? 'image/svg+xml' : 'text/css; charset=utf-8', 'Cache-Control': 'private, max-age=3600' });
         res.end(await readFile(join(root, 'public', 'assets', path[2])));
@@ -596,7 +593,7 @@ export async function createService(config, options = {}) {
       }
       if (path.length === 1 || path[1] === 'configure' || path[1] === 'guide') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-        res.end(path[1] === 'guide' ? renderGuide(config, language) : renderDashboard(config, language, listDownloads(), addonSources.status(), allocated()));
+        res.end(path[1] === 'guide' ? renderGuide(config) : renderDashboard(config, listDownloads(), addonSources.status(), allocated()));
         return;
       }
       throw fault(404, 'notFound');
@@ -672,8 +669,8 @@ export async function createService(config, options = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const config = JSON.parse(await readFile(join(root, 'config.json'), 'utf8'));
+  const config = JSON.parse(await readFile(process.env.STREMIO_LOCAL_DEBRID_CONFIG || join(root, 'config.json'), 'utf8'));
   const service = await createService(config);
-  console.log(`Cache Local disponível em ${config.baseUrl}`);
+  console.log(`Local Cache available at ${config.baseUrl}`);
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => void service.close().then(() => process.exit(0)));
 }

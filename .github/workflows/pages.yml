@@ -2,7 +2,7 @@ name: Publish installation portal
 on:
   push:
     branches: [main]
-    paths: [public/**, locales/**, scripts/build-docs.mjs, i18n.mjs, .github/workflows/pages.yml]
+    paths: [public/**, messages.json, scripts/build-docs.mjs, .github/workflows/pages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,7 +22,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: node scripts/check-locales.mjs
       - run: node scripts/build-docs.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

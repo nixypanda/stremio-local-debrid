@@ -9,14 +9,14 @@ import { setTimeout as delay } from 'node:timers/promises';
 import WebTorrent from 'webtorrent';
 import { byteRange, createService } from '../server.mjs';
 
-test('intervalos HTTP, inclusive um byte, sufixo e intervalos inválidos', () => {
+test('HTTP ranges include single bytes, suffixes and invalid ranges', () => {
   assert.deepEqual(byteRange('bytes=0-0', 100), { start: 0, end: 0, status: 206 });
   assert.deepEqual(byteRange('bytes=-5', 100), { start: 95, end: 99, status: 206 });
   assert.deepEqual(byteRange('bytes=95-200', 100), { start: 95, end: 99, status: 206 });
   for (const range of ['bytes=100-', 'bytes=-0', 'bytes=10-1', 'bytes=0-1,2-3', 'invalid']) assert.throws(() => byteRange(range, 100), { status: 416 });
 });
 
-test('play baixa apenas o arquivo escolhido, continua sem player, retoma e reproduz offline', { timeout: 45000 }, async () => {
+test('play downloads only the selected file, continues without the player, resumes and plays offline', { timeout: 45000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'stremio-cache-test-'));
   const seedDir = join(directory, 'seed');
   const stateDir = join(directory, 'state');
@@ -38,7 +38,7 @@ test('play baixa apenas o arquivo escolhido, continua sem player, retoma e repro
     res.end(JSON.stringify({ streams: [{ name: 'Teste', infoHash: torrent.infoHash, fileIdx, behaviorHints: { filename: 'episode.mp4' } }] }));
   });
   await new Promise(done => upstream.listen(0, '127.0.0.1', done));
-  const config = { host: '127.0.0.1', port: 0, baseUrl: 'http://127.0.0.1', language: 'pt-BR', token: 'test-token', cacheDir: join(directory, 'cache'), stateDir, maxCacheBytes: 16 * 1024 * 1024, minFreeBytes: 0, maintenanceIntervalMs: 100, sources: [{ name: 'Teste', manifestUrl: `http://127.0.0.1:${upstream.address().port}/manifest.json` }] };
+  const config = { host: '127.0.0.1', port: 0, baseUrl: 'http://127.0.0.1', token: 'test-token', cacheDir: join(directory, 'cache'), stateDir, maxCacheBytes: 16 * 1024 * 1024, minFreeBytes: 0, maintenanceIntervalMs: 100, sources: [{ name: 'Test', manifestUrl: `http://127.0.0.1:${upstream.address().port}/manifest.json` }] };
   const newService = async () => {
     const client = new WebTorrent({ ...engineOptions, downloadLimit: 96 * 1024 });
     client.on('torrent', download => download.addPeer(`127.0.0.1:${seed.torrentPort}`));
@@ -46,7 +46,7 @@ test('play baixa apenas o arquivo escolhido, continua sem player, retoma e repro
   };
   const waitFor = async predicate => {
     const until = Date.now() + 20000;
-    while (!predicate()) { if (Date.now() > until) throw new Error('Tempo de download excedido.'); await delay(100); }
+    while (!predicate()) { if (Date.now() > until) throw new Error('Download timed out.'); await delay(100); }
   };
   try {
     service = await newService();
@@ -94,7 +94,7 @@ test('play baixa apenas o arquivo escolhido, continua sem player, retoma e repro
     await new Promise(done => upstream.close(done));
     const offlineStreams = await service.getStreams('series', 'tt123:1:2');
     assert.equal(offlineStreams.streams.length, 1);
-    assert.match(offlineStreams.streams[0].name, /Em cache/);
+    assert.match(offlineStreams.streams[0].name, /Cached/);
     config.maxCacheBytes = media.length + 100;
     const overBudget = await fetch(service.playURL({ infoHash: torrent.infoHash, fileIdx: otherIndex }));
     assert.equal(overBudget.status, 507);

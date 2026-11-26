@@ -3,12 +3,11 @@ import { parseArgs } from 'node:util';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, prepareConfig } from './setup.mjs';
-import { locales, languageCode } from './i18n.mjs';
+import text from './messages.json' with { type: 'json' };
 import { installService } from './install.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const gib = 2 ** 30;
-const isLanguage = value => Object.keys(locales).some(code => code.toLowerCase() === value.replaceAll('_', '-').toLowerCase());
 const isAddress = value => { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && !url.search && !url.hash; } catch { return false; } };
 const isAddon = value => { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && /\/manifest\.json$|\/stremio\/v1(?:\/stremioget)?\/?$/.test(url.pathname); } catch { return false; } };
 
@@ -16,14 +15,12 @@ export async function runSetup(options = {}) {
   const directory = options.directory || root;
   const input = options.input || process.stdin;
   const output = options.output || process.stdout;
-  const { values } = parseArgs({ args: options.args || process.argv.slice(2), options: { yes: { type: 'boolean', short: 'y' }, 'no-service': { type: 'boolean' }, lang: { type: 'string' }, help: { type: 'boolean', short: 'h' } } });
-  if (values.lang && !isLanguage(values.lang)) throw new Error(`Unknown locale: ${values.lang}. Use a code from locales/stremio-languages.json.`);
+  const { values } = parseArgs({ args: options.args || process.argv.slice(2), options: { yes: { type: 'boolean', short: 'y' }, 'no-service': { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
   let config = await loadConfig(directory);
-  config.language = values.lang ? languageCode(values.lang) : config.language;
-  let t = locales[config.language].cli;
+  const t = text.cli;
   const print = value => output.write(`${value}\n`);
   if (values.help) {
-    print(`npm run setup -- [--yes] [--no-service] [--lang ${config.language}]\n${t.help}`);
+    print(`npm run setup -- [--yes] [--no-service]\n${t.help}`);
     return;
   }
   if (!values.yes && (!input.isTTY || !output.isTTY) && !options.question) throw new Error(t.nonInteractive);
@@ -50,11 +47,6 @@ export async function runSetup(options = {}) {
   try {
     print(`\nStremio Local Debrid\n${t.intro}`);
     if (!values.yes) {
-      for (;;) {
-        const language = await ask(`${locales[config.language].language} (? = 51)`, config.language, value => value === '?' || isLanguage(value));
-        if (language !== '?') { config.language = languageCode(language); t = locales[config.language].cli; break; }
-        print(Object.entries(locales).map(([code, locale]) => `${code}: ${locale.localeName}`).join('\n'));
-      }
       const previousPort = config.port;
       config.port = Number(await ask(t.port, config.port, value => /^\d+$/.test(value) && Number(value) > 0 && Number(value) <= 65535));
       if (config.baseUrl) {
@@ -88,7 +80,7 @@ export async function runSetup(options = {}) {
     } else {
       print('npm start');
     }
-    print(`${locales[config.language].addonUrl}: ${join(config.stateDir, 'addon-url.txt')}\n${locales[config.language].status}: ${join(config.stateDir, 'status-url.txt')}\n${t.connect}`);
+    print(`${text.addonUrl}: ${join(config.stateDir, 'addon-url.txt')}\n${text.status}: ${join(config.stateDir, 'status-url.txt')}\n${t.connect}`);
     return config;
   } catch (error) {
     if (abort.signal.aborted || error.name === 'AbortError') { print(t.cancelled); return; }

@@ -6,7 +6,7 @@ Publish the repository and the `public/` directory through the GitHub Pages work
 
 This manifest identifies a **self-hosted server**, with `configurationRequired` and `configurable` enabled. Its `/configure` page explains server installation and prepares a user's private manifest URL. The public site does not implement torrent playback. It should not be presented as a ready-to-play hosted debrid service.
 
-Validate public HTTPS availability, manifest fields, the `/configure` page, logo and translated assets before submitting. The standard Stremio central publishing API accepts:
+Validate public HTTPS availability, manifest fields, the `/configure` page, logo and English installation guide before submitting. The standard Stremio central publishing API accepts:
 
 ```json
 {

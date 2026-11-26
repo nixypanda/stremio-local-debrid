@@ -6,11 +6,9 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const xml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[character]);
 const systemdQuote = value => `"${String(value).replaceAll('%', '%%').replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
-const powershellQuote = value => `'${String(value).replaceAll("'", "''")}'`;
 
 export function runtimeDirectory(platform = process.platform, home = homedir(), environment = process.env) {
   if (platform === 'darwin') return join(home, 'Library', 'Application Support', 'stremio-local-debrid');
-  if (platform === 'win32') return join(environment.LOCALAPPDATA || join(home, 'AppData', 'Local'), 'StremioLocalDebrid');
   if (platform === 'linux') return join(environment.XDG_DATA_HOME || join(home, '.local', 'share'), 'stremio-local-debrid');
   throw new Error(`Automatic startup is unsupported on ${platform}.`);
 }
@@ -19,7 +17,7 @@ export async function stopStartup(runtime, options = {}) {
   const platform = options.platform || process.platform;
   const home = options.home || homedir();
   const environment = options.environment || process.env;
-  const execute = options.execute || ((file, args) => execFileSync(file, args, { stdio: 'pipe', windowsHide: true }));
+  const execute = options.execute || ((file, args) => execFileSync(file, args, { stdio: 'pipe' }));
   if (platform === 'darwin') {
     const service = `gui/${options.uid ?? process.getuid()}/local.stremio.cache`;
     try { execute('launchctl', ['print', service]); } catch { return; }
@@ -33,20 +31,6 @@ export async function stopStartup(runtime, options = {}) {
     const unit = join(environment.XDG_CONFIG_HOME || join(home, '.config'), 'systemd', 'user', 'stremio-local-debrid.service');
     try { await stat(unit); } catch (error) { if (error.code === 'ENOENT') return; throw error; }
     execute('systemctl', ['--user', 'stop', 'stremio-local-debrid.service']);
-  } else if (platform === 'win32') {
-    const script = join(runtime, 'stop-startup.ps1');
-    await writeFile(script, `$ErrorActionPreference = 'Stop'
-$task = Get-ScheduledTask -TaskName 'Stremio Local Debrid' -ErrorAction SilentlyContinue
-if ($task) {
-  $task | Stop-ScheduledTask
-  for ($attempt = 0; $attempt -lt 50; $attempt++) {
-    if ((Get-ScheduledTask -TaskName 'Stremio Local Debrid').State -ne 'Running') { break }
-    Start-Sleep -Milliseconds 300
-  }
-  if ((Get-ScheduledTask -TaskName 'Stremio Local Debrid').State -eq 'Running') { throw 'The existing server task did not stop.' }
-}
-`);
-    execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script]);
   } else {
     throw new Error(`Automatic startup is unsupported on ${platform}.`);
   }
@@ -56,7 +40,7 @@ export async function installStartup(runtime, options = {}) {
   const platform = options.platform || process.platform;
   const home = options.home || homedir();
   const environment = options.environment || process.env;
-  const execute = options.execute || ((file, args) => execFileSync(file, args, { stdio: 'pipe', windowsHide: true }));
+  const execute = options.execute || ((file, args) => execFileSync(file, args, { stdio: 'pipe' }));
   const node = options.node || process.execPath;
   const server = join(runtime, 'server.mjs');
   if (platform === 'darwin') {
@@ -110,22 +94,6 @@ WantedBy=default.target
     execute('systemctl', ['--user', 'enable', 'stremio-local-debrid.service']);
     execute('systemctl', ['--user', 'restart', 'stremio-local-debrid.service']);
     return unit;
-  }
-  if (platform === 'win32') {
-    const script = join(runtime, 'install-startup.ps1');
-    const argument = `"${server}"`;
-    await writeFile(script, `$ErrorActionPreference = 'Stop'
-$identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$action = New-ScheduledTaskAction -Execute ${powershellQuote(node)} -Argument ${powershellQuote(argument)} -WorkingDirectory ${powershellQuote(runtime)}
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User $identity.Name
-$principal = New-ScheduledTaskPrincipal -UserId $identity.Name -LogonType Interactive -RunLevel Limited
-$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -MultipleInstances IgnoreNew
-Get-ScheduledTask -TaskName 'Stremio Local Debrid' -ErrorAction SilentlyContinue | Stop-ScheduledTask -ErrorAction SilentlyContinue
-Register-ScheduledTask -TaskName 'Stremio Local Debrid' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
-Start-ScheduledTask -TaskName 'Stremio Local Debrid'
-`);
-    execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script]);
-    return script;
   }
   throw new Error(`Automatic startup is unsupported on ${platform}.`);
 }

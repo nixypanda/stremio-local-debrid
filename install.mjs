@@ -12,7 +12,7 @@ export async function installService(directory = root) {
   await mkdir(runtime, { recursive: true, mode: 0o700 });
   await stopStartup(runtime);
   if (resolve(directory) !== resolve(runtime)) {
-    for (const file of ['server.mjs', 'addons.mjs', 'torrents.mjs', 'i18n.mjs', 'ui.mjs', 'cli.mjs', 'setup.mjs', 'install.mjs', 'startup.mjs', 'uninstall.mjs', 'locales', 'public/assets', 'package.json', 'package-lock.json', 'node_modules']) await cp(join(directory, file), join(runtime, file), { recursive: true });
+    for (const file of ['server.mjs', 'addons.mjs', 'torrents.mjs', 'prefetch.mjs', 'messages.json', 'ui.mjs', 'cli.mjs', 'setup.mjs', 'install.mjs', 'startup.mjs', 'uninstall.mjs', 'public/assets', 'package.json', 'package-lock.json', 'node_modules']) await cp(join(directory, file), join(runtime, file), { recursive: true });
   }
   await writeFile(join(runtime, 'config.json'), JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
   await mkdir(join(directory, 'state'), { recursive: true, mode: 0o700 });

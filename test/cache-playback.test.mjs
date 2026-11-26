@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { tmpdir } from 'node:os';
 import { createService } from '../server.mjs';
 
-const configFor = directory => ({ host: '127.0.0.1', port: 0, baseUrl: 'http://127.0.0.1', token: 'test-token', language: 'pt-BR', cacheDir: join(directory, 'cache'), stateDir: join(directory, 'state'), maxCacheBytes: 64 * 1024 * 1024, minFreeBytes: 0, maintenanceIntervalMs: 1000000, prefetchEpisodes: 0 });
+const configFor = directory => ({ host: '127.0.0.1', port: 0, baseUrl: 'http://127.0.0.1', token: 'test-token', cacheDir: join(directory, 'cache'), stateDir: join(directory, 'state'), maxCacheBytes: 64 * 1024 * 1024, minFreeBytes: 0, maintenanceIntervalMs: 1000000, prefetchEpisodes: 0 });
 const jobFor = (config, infoHash, fileIdx, filename, length, extra = {}) => ({ infoHash, fileIdx, filename, path: join(config.cacheDir, infoHash, filename), length, status: 'complete', lastAccess: 1, type: 'movie', id: 'tt123', sourceId: 'source', ...extra });
 const fakeClient = () => {
   const calls = { add: 0, remove: 0 };
@@ -262,13 +262,11 @@ test('missing, truncated, incomplete and unsafe cache files fall back to the tor
   const outside = join(directory, 'outside.mp4');
   await writeFile(outside, randomBytes(4096));
   await addCase('f'.repeat(40), 'outside.mp4', 4096, async job => { job.path = outside; });
-  if (process.platform !== 'win32') {
-    const target = join(directory, 'symlink-target.mp4');
-    await writeFile(target, randomBytes(4096));
-    await addCase('1'.repeat(40), 'link.mp4', 4096, async job => {
-      await symlink(target, job.path);
-    });
-  }
+  const target = join(directory, 'symlink-target.mp4');
+  await writeFile(target, randomBytes(4096));
+  await addCase('1'.repeat(40), 'link.mp4', 4096, async job => {
+    await symlink(target, job.path);
+  });
   await addCase('2'.repeat(40), 'not-incomplete.mp4', 4096, async job => {
     job.status = 'error';
     await writeFile(job.path, randomBytes(4096));

@@ -65,7 +65,7 @@ export async function createAddonSources(config, options = {}) {
     try {
       const saved = JSON.parse(await readFile(snapshotPath, 'utf8'));
       if (Array.isArray(saved.addons)) { sources = sourcesFrom(saved.addons, config); account = saved.account; refreshedAt = saved.refreshedAt; mode = 'saved'; }
-    } catch (error) { if (error.code !== 'ENOENT') console.error('Addons: não foi possível ler a lista salva.'); }
+    } catch (error) { if (error.code !== 'ENOENT') console.error('Addons: could not read the saved list.'); }
   }
   const loadLocal = async () => {
     if (!config.autoDiscoverAddons || closed) return;
@@ -92,19 +92,19 @@ export async function createAddonSources(config, options = {}) {
       lastAttempt = Date.now();
       const requestedAccount = account;
       const response = await request(options.apiUrl || 'https://api.strem.io/api/addonCollectionGet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'AddonCollectionGet', authKey, update: false }), signal: AbortSignal.any([abort.signal, AbortSignal.timeout(8000)]) });
-      if (!response.ok) throw new Error('Falha ao sincronizar.');
+      if (!response.ok) throw new Error('Synchronization failed.');
       const data = await response.json();
-      if (data.error || !Array.isArray(data.result?.addons)) throw new Error('Lista inválida.');
+      if (data.error || !Array.isArray(data.result?.addons)) throw new Error('Invalid addon list.');
       if (closed || account !== requestedAccount) return;
       sources = sourcesFrom(data.result.addons, config);
       mode = 'account';
       refreshedAt = new Date().toISOString();
       await writeFile(`${snapshotPath}.tmp`, JSON.stringify({ account, addons: data.result.addons, refreshedAt }), { mode: 0o600 });
       await rename(`${snapshotPath}.tmp`, snapshotPath);
-    })().catch(() => { if (!closed) console.error('Addons: sincronização indisponível; usando a última lista conhecida.'); }).finally(() => { pending = null; });
+    })().catch(() => { if (!closed) console.error('Addons: synchronization unavailable; using the last known list.'); }).finally(() => { pending = null; });
     return pending;
   };
-  await loadLocal().catch(() => console.error('Addons: não foi possível ler o perfil local.'));
+  await loadLocal().catch(() => console.error('Addons: could not read the local profile.'));
   void refresh();
   const timer = config.autoDiscoverAddons ? setInterval(() => void refresh(), intervalMs) : null;
   timer?.unref();
@@ -146,7 +146,7 @@ export async function fetchAddonStreams(source, type, id) {
   const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
-  if (legacy && data.error) throw new Error('Resposta inválida.');
+  if (legacy && data.error) throw new Error('Invalid response.');
   const streams = legacy ? data.result : data.streams;
   return Array.isArray(streams) ? streams : [];
 }
