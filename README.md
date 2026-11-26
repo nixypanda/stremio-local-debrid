@@ -138,7 +138,7 @@ npm test
 
 Tests use synthetic private torrents and local addon servers. They verify single-file selection, HTTP ranges, continued downloading, restart recovery, offline cached playback, account synchronization, configured URLs, filtering, magnets, private metadata, deduplication, the English dashboard and portal, and startup configuration. CI runs on macOS and Linux; native validators check the platform's startup files. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The GitHub Pages workflow publishes `public/`, including a discovery manifest, `/configure`, the logo and the English installation portal. This static website is suitable for addon directories. Never submit a user's private LAN manifest to a public directory. Directory review and Stremio account installation are separate steps. See [publication notes](docs/PUBLISHING.md).
+The optional static website in `public/` includes a discovery manifest, `/configure`, the logo and the English installation portal. This fork does not automatically publish it to GitHub Pages; the local dashboard already provides installation links. Never submit a user's private LAN manifest to a public directory. Directory review and Stremio account installation are separate steps. See [publication notes](docs/PUBLISHING.md).
 
 ## Privacy and license
 
