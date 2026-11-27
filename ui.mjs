@@ -8,11 +8,13 @@ const header = (config, title) => {
 };
 const footer = () => `<footer><a href="${repository}">Origami · Stremio Local Debrid</a> · <a href="${repository}/blob/main/LICENSE.md">MIT-PoU</a> · <a href="${repository}/issues">GitHub</a></footer></html>`;
 
-export function renderDashboard(config, downloads, sources, bytes) {
+export function renderDashboard(config, downloads, sources, bytes, error) {
   const t = text;
   const base = `${config.baseUrl}/${config.token}`;
   const addonURL = `${base}/manifest.json`;
-  return `${header(config, t.name)}<p>${escapeHtml(t.description)}</p><p><a class="button" href="${escapeHtml(addonURL.replace(/^https?:/, 'stremio:'))}">${t.install}</a> · <a href="${base}/guide">${t.documentation}</a></p><label for="addon">${t.addonUrl}</label><input id="addon" readonly value="${escapeHtml(addonURL)}"><p class="muted">${(bytes / 2 ** 30).toFixed(1)} / ${(config.maxCacheBytes / 2 ** 30).toFixed(0)} GiB</p><table><tr><th>${t.file}</th><th>${t.status}</th><th>${t.progress}</th></tr>${downloads.map(download => `<tr><td>${escapeHtml(download.filename)}</td><td>${escapeHtml(download.status === 'complete' ? t.cached : download.status === 'error' ? t.errors[download.error] || download.error : t.downloading)}</td><td>${(download.progress * 100).toFixed(1)}%</td></tr>`).join('')}</table>${downloads.length ? '' : `<p class="muted">${t.empty}</p>`}<h2>${t.sources}</h2><ul>${sources.sources.map(source => `<li>${escapeHtml(source.name)}</li>`).join('')}</ul>${footer()}`;
+  const controls = download => download.infoHash ? `<form method="post" action="${escapeHtml(base)}/torrents/${escapeHtml(download.infoHash)}/${download.paused ? 'resume' : 'pause'}"><button type="submit">${download.paused ? t.resume : t.pause}</button></form>` : '';
+  const statusLabel = download => download.status === 'complete' ? t.cached : download.status === 'error' ? t.errors[download.error] || download.error : ({ paused: t.paused, metadata: t.metadata, verifying: t.verifying, downloading: t.downloading })[download.status] || t.downloading;
+  return `${header(config, t.name)}${error ? `<p role="alert">${escapeHtml(error)}</p>` : ''}<p>${escapeHtml(t.description)}</p><p><a class="button" href="${escapeHtml(addonURL.replace(/^https?:/, 'stremio:'))}">${t.install}</a> · <a href="${base}/guide">${t.documentation}</a></p><label for="addon">${t.addonUrl}</label><input id="addon" readonly value="${escapeHtml(addonURL)}"><p class="muted">${(bytes / 2 ** 30).toFixed(1)} / ${(config.maxCacheBytes / 2 ** 30).toFixed(0)} GiB</p><p class="muted">${t.pauseHelp}</p><table><tr><th>${t.file}</th><th>${t.status}</th><th>${t.progress}</th><th>${t.actions}</th></tr>${downloads.map(download => `<tr><td>${escapeHtml(download.filename)}</td><td>${escapeHtml(statusLabel(download))}</td><td>${(download.progress * 100).toFixed(1)}%</td><td>${controls(download)}</td></tr>`).join('')}</table>${downloads.length ? '' : `<p class="muted">${t.empty}</p>`}<h2>${t.sources}</h2><ul>${sources.sources.map(source => `<li>${escapeHtml(source.name)}</li>`).join('')}</ul>${footer()}`;
 }
 
 export function renderGuide(config) {

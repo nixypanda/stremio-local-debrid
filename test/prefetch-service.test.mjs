@@ -58,11 +58,21 @@ test('prefetches one episode ahead and refills only after playback advances', { 
     await delay(200);
     assert.equal(service.listDownloads().length, 2);
     const secondUrl = await urlFor(2);
+    const control = action => fetch(`${config.baseUrl}/${config.token}/torrents/${torrent.infoHash}/${action}`, { method: 'POST', redirect: 'manual' });
+    assert.equal((await control('pause')).status, 303);
+    assert.equal(client.torrents.length, 0);
     const secondProbe = await fetch(secondUrl, { headers: { Range: 'bytes=0-0' } });
     await secondProbe.arrayBuffer();
     assert.equal(service.listDownloads()[1].prefetch, true);
     const second = await fetch(secondUrl);
     await second.arrayBuffer();
+    // Cached playback can advance the episode, but must not bypass the
+    // torrent-wide pause to prefetch the next file in the same pack.
+    await delay(200);
+    assert.equal(service.listDownloads().length, 2);
+    assert.equal(client.torrents.length, 0);
+    assert.ok(service.listDownloads().every(job => job.paused));
+    assert.equal((await control('resume')).status, 303);
     await waitFor(() => service.listDownloads().length === 3 && service.listDownloads()[2].status === 'complete');
     assert.equal(service.listDownloads()[1].prefetch, false);
     assert.equal(service.listDownloads()[2].prefetch, true);

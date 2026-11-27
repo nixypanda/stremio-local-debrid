@@ -75,10 +75,25 @@ test('play downloads only the selected file, continues without the player, resum
     abort.abort();
     await reader.cancel().catch(() => {});
     assert.equal(service.listDownloads()[0].status, 'downloading');
+    // Pause must detach real WebTorrent wires without deleting partial data.
+    await waitFor(() => service.client.torrents[0]?.files[fileIdx].downloaded > 0);
+    let paused;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      paused = await fetch(`${config.baseUrl}/${config.token}/torrents/${torrent.infoHash}/pause`, { method: 'POST', redirect: 'manual' });
+      if (paused.status !== 409) break;
+      await delay(10);
+    }
+    assert.equal(paused.status, 303);
+    assert.equal(service.client.torrents.length, 0);
+    assert.equal(service.listDownloads()[0].status, 'paused');
     const oldPort = new URL(config.baseUrl).port;
     await service.close();
     service = await newService();
     url = url.replace(`:${oldPort}/`, `:${new URL(config.baseUrl).port}/`);
+    assert.equal(service.client.torrents.length, 0);
+    assert.equal(service.listDownloads()[0].status, 'paused');
+    assert.equal((await fetch(url)).status, 409);
+    assert.equal((await fetch(`${config.baseUrl}/${config.token}/torrents/${torrent.infoHash}/resume`, { method: 'POST', redirect: 'manual' })).status, 303);
     await waitFor(() => service.listDownloads()[0]?.status === 'complete');
     assert.deepEqual(await readFile(service.listDownloads()[0].path), media);
     const other = service.client.torrents[0].files.find(file => file.name === 'other.mp4');

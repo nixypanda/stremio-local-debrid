@@ -146,15 +146,17 @@ export async function createService(config, options = {}) {
     if (!validHash.test(descriptor.infoHash) || (descriptor.fileIdx != null && (!Number.isInteger(descriptor.fileIdx) || descriptor.fileIdx < 0))) throw fault(400, 'invalidTorrent');
     return descriptor;
   };
+  const isPaused = hash => [...jobs.values()].some(job => job.infoHash === hash && job.paused);
   const getEntry = async (descriptor, reserve = false) => {
     const hash = descriptor.infoHash.toLowerCase();
+    if (isPaused(hash)) throw fault(409, 'torrentPaused');
     if (entries.has(hash)) {
       const existing = entries.get(hash);
       if (reserve) existing.pendingRequests++;
       try { return await existing.ready; }
       catch (error) { if (reserve) existing.pendingRequests--; throw error; }
     }
-    const entry = { infoHash: hash, selected: new Set(), readers: 0, pendingRequests: reserve ? 1 : 0, lastAccess: Date.now(), torrent: null };
+    const entry = { infoHash: hash, selected: new Set(), readers: 0, pendingRequests: reserve ? 1 : 0, lastAccess: Date.now(), torrent: null, phase: 'metadata' };
     entry.ready = (async () => {
       let torrentId;
       try { torrentId = await readFile(join(stateDir, 'torrents', `${hash}.torrent`)); }
@@ -170,21 +172,30 @@ export async function createService(config, options = {}) {
         console.error('Torrent:', error.message);
       });
       await new Promise((done, reject) => {
-        const timer = setTimeout(() => reject(fault(504, 'metadataTimeout')), config.metadataTimeoutMs || 90000);
-        const cleanup = () => { clearTimeout(timer); torrent.off('error', failed); torrent.off('ready', ready); };
+        // 'ready' includes hashing existing data, which can take much longer
+        // than peer metadata discovery. Never time out that disk verification.
+        let timer;
+        const cleanup = () => { clearTimeout(timer); torrent.off('metadata', metadata); torrent.off('error', failed); torrent.off('ready', ready); torrent.off('close', closed); };
         const failed = error => { cleanup(); reject(error); };
+        const metadata = () => { clearTimeout(timer); entry.phase = 'verifying'; };
+        const closed = () => failed(fault(409, 'torrentStopped'));
         const ready = () => { cleanup(); done(); };
+        torrent.once('metadata', metadata);
         torrent.once('error', failed);
         torrent.once('ready', ready);
+        torrent.once('close', closed);
+        if (Buffer.isBuffer(torrentId) || torrent.metadata || torrent.ready) metadata();
+        else timer = setTimeout(() => failed(fault(504, 'metadataTimeout')), config.metadataTimeoutMs || 90000);
         if (torrent.ready) ready();
       });
       for (const file of torrent.files) {
         if (!resolve(cacheDir, hash, file.path).startsWith(join(cacheDir, hash) + sep)) throw fault(400, 'unsafePath');
       }
       await writeFile(join(stateDir, 'torrents', `${hash}.torrent`), torrent.torrentFile, { mode: 0o600 });
+      entry.phase = 'ready';
       return entry;
     })().catch(async error => {
-      entries.delete(hash);
+      if (entries.get(hash) === entry) entries.delete(hash);
       if (entry.torrent && !entry.torrent.destroyed) await new Promise(done => client.remove(entry.torrent, { destroyStore: false }, () => done()));
       throw error;
     });
@@ -219,7 +230,7 @@ export async function createService(config, options = {}) {
       const related = [...jobs.values()].filter(job => job.infoHash === hash);
       const entry = entries.get(hash);
       const direct = directViews.get(hash);
-      if (evictions.has(hash) || direct?.readers) continue;
+      if (evictions.has(hash) || direct?.readers || isPaused(hash)) continue;
       if (!evictionEligible(related, evictionState(hash), playback, prefetchWindow, mode)) continue;
       if (entry?.torrent && !entry.torrent.destroyed) {
         try {
@@ -255,6 +266,7 @@ export async function createService(config, options = {}) {
   const selectFile = async (descriptor, download, isPrefetch = false, generation, promote = false, reserve = false) => {
     const entry = await getEntry(descriptor, reserve);
     const operation = selection.then(async () => {
+      if (isPaused(entry.infoHash)) throw fault(409, 'torrentPaused');
       if (isPrefetch && (generation !== playbackGeneration || closing)) throw new Error('stalePrefetch');
       entry.lastAccess = Date.now();
       const torrent = entry.torrent;
@@ -272,7 +284,7 @@ export async function createService(config, options = {}) {
             if (isPrefetch || error.status !== 507) throw error;
             let paused = false;
             for (const [prefetchKey, job] of jobs) {
-              if (!job.prefetch || job.status === 'complete' || prefetchKey === key) continue;
+              if (job.paused || !job.prefetch || job.status === 'complete' || prefetchKey === key) continue;
               const active = entries.get(job.infoHash);
               if (active?.selected.has(job.fileIdx)) { active.torrent?.files[job.fileIdx]?.deselect(); active.selected.delete(job.fileIdx); }
               jobs.delete(prefetchKey);
@@ -359,7 +371,10 @@ export async function createService(config, options = {}) {
     const entry = entries.get(job.infoHash);
     const file = entry?.torrent?.files[job.fileIdx];
     const downloaded = file?.done || job.status === 'complete' ? job.length : Math.max(0, file?.downloaded || 0);
-    return { filename: job.filename, status: file?.done ? 'complete' : job.status, prefetch: !!job.prefetch, bytes: job.length, downloaded, progress: job.length ? downloaded / job.length : 0, peers: entry?.torrent?.numPeers || 0, speed: entry?.torrent?.downloadSpeed || 0, path: job.path, error: job.error };
+    const paused = isPaused(job.infoHash);
+    const progressBytes = paused && job.status !== 'complete' ? job.pausedDownloaded || 0 : downloaded;
+    const status = paused ? 'paused' : job.status === 'complete' ? 'complete' : entry?.phase === 'metadata' ? 'metadata' : entry?.phase === 'verifying' ? 'verifying' : file?.done ? 'complete' : job.status;
+    return { infoHash: job.infoHash, paused, filename: job.filename, status, prefetch: !!job.prefetch, bytes: job.length, downloaded: progressBytes, progress: job.length ? progressBytes / job.length : 0, peers: entry?.torrent?.numPeers || 0, speed: entry?.torrent?.downloadSpeed || 0, path: job.path, error: ['metadata', 'verifying'].includes(status) ? undefined : job.error };
   });
   const defaults = text;
   const manifest = { id: 'local.stremio.cache', version: '1.2.0', name: defaults.name, description: defaults.description, logo: `${config.baseUrl}/${config.token}/assets/logo.png`, resources: ['stream'], types: ['movie', 'series', 'anime', 'other'], catalogs: [], behaviorHints: { configurable: true, p2p: true } };
@@ -402,7 +417,7 @@ export async function createService(config, options = {}) {
     const operation = selection.then(async () => {
       let changed = false;
       for (const [key, job] of jobs) {
-        if (!job.prefetch || job.status === 'complete' || job.type === current.type && job.id === current.id) continue;
+        if (job.paused || !job.prefetch || job.status === 'complete' || job.type === current.type && job.id === current.id) continue;
         const entry = entries.get(job.infoHash);
         const file = entry?.torrent?.files[job.fileIdx];
         if (file?.done) { job.status = 'complete'; changed = true; continue; }
@@ -468,6 +483,7 @@ export async function createService(config, options = {}) {
       for (const nextId of nextIds) {
         if (generation !== playbackGeneration) return;
         const existing = [...jobs.values()].find(job => job.type === current.type && job.id === nextId && job.status !== 'error');
+        if (existing?.paused) { prefetchRetryAt = Date.now() + 60000; return; }
         if (existing?.status === 'complete') continue;
         if (existing?.status === 'downloading') { prefetchRetryAt = Date.now() + 60000; return; }
         const response = await getStreams(current.type, nextId);
@@ -513,6 +529,58 @@ export async function createService(config, options = {}) {
       const requestURL = new URL(req.url, config.baseUrl);
       const path = requestURL.pathname.split('/').filter(Boolean);
       if (path[0] !== config.token) throw fault(404, 'notFound');
+      if (path[1] === 'torrents' && path.length === 4 && ['pause', 'resume'].includes(path[3])) {
+        if (req.method !== 'POST') throw fault(405, 'invalidMethod');
+        // Forms are same-origin; only the read-only addon API permits CORS.
+        if (req.headers.origin && req.headers.origin !== new URL(config.baseUrl).origin) throw fault(403, 'invalidSource');
+        const hash = path[2];
+        if (!validHash.test(hash) || hash !== hash.toLowerCase()) throw fault(400, 'invalidTorrent');
+        const pause = path[3] === 'pause';
+        const operation = selection.then(async () => {
+          const related = [...jobs.values()].filter(job => job.infoHash === hash);
+          if (!related.length) throw fault(404, 'notFound');
+          const entry = entries.get(hash);
+          const snapshots = new Map(related.map(job => {
+            const file = entry?.torrent?.files[job.fileIdx];
+            return [job.fileIdx, { done: file?.done, downloaded: file?.downloaded }];
+          }));
+          if (pause && (entry?.readers || entry?.pendingRequests || directViews.get(hash)?.readers)) throw fault(409, 'torrentBusy');
+          if (pause && entry?.torrent && !entry.torrent.destroyed) {
+            // Detach the engine entirely: WebTorrent.pause() alone does not
+            // stop existing wires. Keep the store for a verified resume.
+            await new Promise((done, reject) => client.remove(entry.torrent, { destroyStore: false }, error => error ? reject(error) : done()));
+            entries.delete(hash);
+          }
+          for (const job of related) {
+            if (pause) {
+              const file = snapshots.get(job.fileIdx);
+              if (file?.done) job.status = 'complete';
+              job.pausedDownloaded = file?.downloaded ?? job.pausedDownloaded ?? 0;
+            }
+            job.paused = pause;
+          }
+          await persist();
+          updateSleep();
+          return related;
+        });
+        selection = operation.catch(() => {});
+        try {
+          const related = await operation;
+          if (!pause) {
+            for (const job of related) {
+              if (job.status !== 'complete') await selectFile(job, true, !!job.prefetch, playbackGeneration);
+            }
+            prefetchRetryAt = 0;
+          }
+        } catch (error) {
+          res.writeHead(error.status || 502, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+          res.end(renderDashboard(config, listDownloads(), addonSources.status(), allocated(), t.errors[error.message] || error.message));
+          return;
+        }
+        res.writeHead(303, { Location: `/${config.token}/` });
+        res.end();
+        return;
+      }
       if (!['GET', 'HEAD'].includes(req.method)) throw fault(405, 'invalidMethod');
       if (path[1] === 'manifest.json' && path.length === 2) { json(res, 200, { ...manifest, types: [...new Set([...manifest.types, ...addonSources.status().sources.flatMap(source => source.types)])] }); return; }
       if (path[1] === 'downloads.json') { json(res, 200, { downloads: listDownloads(), cacheBytes: allocated(), cacheLimitBytes: config.maxCacheBytes }); return; }
@@ -602,13 +670,11 @@ export async function createService(config, options = {}) {
       else if (!res.destroyed) res.destroy();
     }
   });
-  const maintenance = async () => {
-    if (maintenanceRunning || closing) return;
-    maintenanceRunning = true;
+  const runMaintenance = async () => {
     try {
       let changed = false;
       for (const [hash, entry] of entries) {
-        if (!entry.torrent?.ready || entry.torrent.destroyed) continue;
+        if (entry.phase !== 'ready' || !entry.torrent?.ready || entry.torrent.destroyed) continue;
         for (const index of entry.selected) {
           const file = entry.torrent.files[index];
           const job = jobs.get(`${hash}:${index}`);
@@ -639,13 +705,21 @@ export async function createService(config, options = {}) {
       }
     } finally { maintenanceRunning = false; updateSleep(); }
   };
+  const maintenance = async () => {
+    if (maintenanceRunning || closing) return;
+    maintenanceRunning = true;
+    // Share the mutation queue so eviction cannot race manual pause/resume.
+    const operation = selection.then(runMaintenance);
+    selection = operation.catch(() => {});
+    return operation;
+  };
   const timer = setInterval(() => void maintenance().catch(error => console.error('Cache:', error.message)), config.maintenanceIntervalMs || 5000);
   timer.unref();
   await new Promise((done, reject) => { server.once('error', reject); server.listen(config.port, config.host, done); });
   if (config.port === 0) config.baseUrl = `http://${config.host}:${server.address().port}`;
   let removedStale = false;
   for (const [key, job] of jobs) {
-    if (job.prefetch && (!prefetchEpisodes || !playback || job.prefetchParentId !== playback.id)) {
+    if (!job.paused && job.prefetch && (!prefetchEpisodes || !playback || job.prefetchParentId !== playback.id)) {
       if (job.status === 'complete') job.prefetch = false;
       else jobs.delete(key);
       removedStale = true;
@@ -653,7 +727,9 @@ export async function createService(config, options = {}) {
   }
   if (removedStale) await persist();
   for (const job of jobs.values()) {
-    if (job.status === 'downloading') void selectFile(job, true, !!job.prefetch, playbackGeneration).catch(error => { job.status = 'error'; job.error = error.message; void persist(); });
+    // Retry old metadata timeouts once on startup, including downloads that
+    // earlier versions interrupted while verifying their saved pieces.
+    if (!job.paused && (job.status === 'downloading' || job.status === 'error' && job.error === 'metadataTimeout')) void selectFile(job, true, !!job.prefetch, playbackGeneration).catch(error => { if (!job.paused && error.message !== 'torrentStopped') { job.status = 'error'; job.error = error.message; void persist(); } });
   }
   void runPrefetch();
   return { server, client, manifest, playURL, getStreams, listDownloads, maintenance, addonSources, async close() {

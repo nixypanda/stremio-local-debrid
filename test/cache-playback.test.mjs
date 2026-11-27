@@ -93,6 +93,158 @@ const cleanup = async (service, directory) => {
   finally { await rm(directory, { recursive: true, force: true }); }
 };
 
+for (const savedMetadata of [false, true]) {
+  test(`slow disk verification survives metadata timeout (${savedMetadata ? 'saved metadata' : 'peer metadata'})`, async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'stremio-verify-'));
+    const config = { ...configFor(directory), metadataTimeoutMs: 100, idleReleaseMs: 1 };
+    const hash = 'd'.repeat(40);
+    const file = new FakeFile({ name: 'partial.mp4', data: Buffer.alloc(100), done: false });
+    const torrent = new FakeTorrent(hash, [file]);
+    torrent.ready = false;
+    const client = new FakeClient({ buildTorrent: () => torrent });
+    await prepare(config, [jobFor(config, hash, 0, 'partial.mp4', 100, savedMetadata ? { status: 'error', error: 'metadataTimeout' } : { status: 'downloading' })]);
+    await mkdir(join(config.cacheDir, hash), { recursive: true });
+    await writeFile(join(config.cacheDir, hash, 'partial.mp4'), Buffer.alloc(35));
+    if (savedMetadata) {
+      await mkdir(join(config.stateDir, 'torrents'), { recursive: true });
+      await writeFile(join(config.stateDir, 'torrents', `${hash}.torrent`), Buffer.from(hash));
+    }
+    let service;
+    try {
+      service = await createService(config, { client });
+      for (let i = 0; !client.added.length && i < 100; i++) await delay(1);
+      assert.equal(client.added.length, 1);
+      if (!savedMetadata) {
+        assert.equal(service.listDownloads()[0].status, 'metadata');
+        const html = await (await fetch(`${config.baseUrl}/${config.token}/`)).text();
+        assert.match(html, /Fetching metadata/);
+        torrent.metadata = Buffer.from(hash);
+        torrent.emit('metadata');
+      }
+      file.downloaded = 35; // Verified disk pieces, not network downloads.
+      assert.equal(service.listDownloads()[0].status, 'verifying');
+      assert.equal(service.listDownloads()[0].progress, 0.35);
+      await delay(250); // More than twice the metadata discovery deadline.
+      await service.maintenance();
+      assert.equal(torrent.destroyed, false);
+      assert.equal(service.listDownloads()[0].status, 'verifying');
+      const html = await (await fetch(`${config.baseUrl}/${config.token}/`)).text();
+      assert.match(html, /Verifying cached data/);
+      assert.doesNotMatch(html, /Could not obtain torrent metadata/);
+      torrent.ready = true;
+      torrent.emit('ready');
+      for (let i = 0; service.listDownloads()[0].status !== 'downloading' && i < 100; i++) await delay(1);
+      assert.equal(service.listDownloads()[0].status, 'downloading');
+      assert.equal(service.listDownloads()[0].error, undefined);
+      assert.equal(service.listDownloads()[0].progress, 0.35);
+      assert.deepEqual(await readFile(join(config.cacheDir, hash, 'partial.mp4')), Buffer.alloc(35));
+      for (const event of ['metadata', 'ready', 'close']) assert.equal(torrent.listenerCount(event), 0);
+    } finally { await cleanup(service, directory); }
+  });
+}
+
+test('genuinely missing metadata still times out, cleans listeners and keeps partial files', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stremio-metadata-timeout-'));
+  const config = { ...configFor(directory), metadataTimeoutMs: 20 };
+  const hash = 'e'.repeat(40);
+  const torrent = new FakeTorrent(hash, []);
+  torrent.ready = false;
+  const client = new FakeClient({ buildTorrent: () => torrent });
+  await prepare(config, [jobFor(config, hash, 0, 'partial.mp4', 100, { status: 'downloading' })]);
+  await mkdir(join(config.cacheDir, hash), { recursive: true });
+  await writeFile(join(config.cacheDir, hash, 'partial.mp4'), Buffer.alloc(35));
+  let service;
+  try {
+    service = await createService(config, { client });
+    for (let i = 0; service.listDownloads()[0].status !== 'error' && i < 100; i++) await delay(5);
+    assert.equal(service.listDownloads()[0].error, 'metadataTimeout');
+    assert.equal(torrent.destroyed, true);
+    for (const event of ['metadata', 'ready', 'close']) assert.equal(torrent.listenerCount(event), 0);
+    assert.deepEqual(await readFile(join(config.cacheDir, hash, 'partial.mp4')), Buffer.alloc(35));
+  } finally { await cleanup(service, directory); }
+});
+
+test('dashboard pauses a whole torrent, preserves data and pause state, and resumes explicitly', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stremio-pause-'));
+  const config = configFor(directory);
+  const hash = 'b'.repeat(40);
+  const media = Buffer.from('cached video');
+  await mkdir(join(config.cacheDir, hash), { recursive: true });
+  await writeFile(join(config.cacheDir, hash, 'cached.mp4'), media);
+  await prepare(config, [
+    jobFor(config, hash, 0, 'partial.mp4', 100, { status: 'downloading' }),
+    jobFor(config, hash, 1, 'cached.mp4', media.length),
+  ]);
+  const buildTorrent = () => {
+    const partial = new FakeFile({ name: 'partial.mp4', data: Buffer.alloc(100), done: false });
+    partial.downloaded = 25;
+    return new FakeTorrent(hash, [partial, new FakeFile({ name: 'cached.mp4', data: media })]);
+  };
+  let client = new FakeClient({ buildTorrent });
+  let service;
+  const action = (verb, options = {}) => fetch(`${config.baseUrl}/${config.token}/torrents/${hash}/${verb}`, { method: 'POST', redirect: 'manual', ...options });
+  try {
+    service = await createService(config, { client });
+    // Drain the startup download selection before attempting to pause.
+    for (let i = 0; !service.listDownloads()[0].downloaded && i < 100; i++) await delay(10);
+    assert.equal((await action('pause', { method: 'GET' })).status, 405);
+    assert.equal((await action('pause', { headers: { Origin: 'https://other.example' } })).status, 403);
+    assert.equal((await fetch(`${config.baseUrl}/wrong/torrents/${hash}/pause`, { method: 'POST' })).status, 404);
+    assert.equal((await fetch(`${config.baseUrl}/${config.token}/torrents/invalid/pause`, { method: 'POST' })).status, 400);
+    assert.equal((await fetch(`${config.baseUrl}/${config.token}/torrents/${'f'.repeat(40)}/pause`, { method: 'POST' })).status, 404);
+    assert.equal((await action('pause')).status, 303);
+    assert.equal(client.torrents.length, 0);
+    assert.ok(service.listDownloads().every(job => job.paused && job.status === 'paused'));
+    assert.equal(service.listDownloads()[0].progress, 0.25);
+    await service.maintenance();
+    assert.equal(client.torrents.length, 0);
+    assert.deepEqual(await readFile(join(config.cacheDir, hash, 'cached.mp4')), media);
+    const dashboard = await (await fetch(`${config.baseUrl}/${config.token}/`)).text();
+    assert.match(dashboard, /Resume torrent/);
+    assert.match(dashboard, /method="post"/);
+    assert.match(dashboard, /Paused/);
+    const stored = JSON.parse(await readFile(join(config.stateDir, 'downloads.json'), 'utf8'));
+    assert.ok(stored.every(job => job.paused));
+    await service.close();
+    client = new FakeClient({ buildTorrent });
+    service = await createService(config, { client });
+    assert.equal(client.added.length, 0);
+    const incomplete = await fetch(service.playURL({ infoHash: hash, fileIdx: 0 }));
+    assert.equal(incomplete.status, 409);
+    assert.match((await incomplete.json()).error, /paused/);
+    const cached = await fetch(service.playURL({ infoHash: hash, fileIdx: 1 }));
+    assert.equal(cached.status, 200);
+    assert.deepEqual(Buffer.from(await cached.arrayBuffer()), media);
+    assert.equal(client.added.length, 0);
+    assert.equal((await action('resume')).status, 303);
+    assert.deepEqual(client.added, [hash]);
+    assert.ok(service.listDownloads().every(job => !job.paused));
+    assert.equal(service.listDownloads()[0].status, 'downloading');
+    assert.ok(JSON.parse(await readFile(join(config.stateDir, 'downloads.json'), 'utf8')).every(job => !job.paused));
+  } finally { await cleanup(service, directory); }
+});
+
+test('pause rejects active torrent playback without interrupting it', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stremio-pause-busy-'));
+  const config = configFor(directory);
+  const hash = 'c'.repeat(40);
+  const file = new FakeFile({ name: 'video.mp4', data: Buffer.alloc(100), done: false });
+  file.createReadStream = () => new Readable({ read() { this.push(Buffer.from('x')); this._read = () => {}; } });
+  await prepare(config, [jobFor(config, hash, 0, 'video.mp4', 100, { status: 'downloading' })]);
+  const client = new FakeClient({ buildTorrent: () => new FakeTorrent(hash, [file]) });
+  const service = await createService(config, { client });
+  const abort = new AbortController();
+  try {
+    const playing = await fetch(service.playURL({ infoHash: hash, fileIdx: 0 }), { signal: abort.signal });
+    assert.equal(playing.status, 200);
+    const pause = await fetch(`${config.baseUrl}/${config.token}/torrents/${hash}/pause`, { method: 'POST' });
+    assert.equal(pause.status, 409);
+    assert.match(await pause.text(), /Stop playback before pausing/);
+    assert.equal(service.listDownloads()[0].paused, false);
+    assert.equal(client.torrents.length, 1);
+  } finally { abort.abort(); await cleanup(service, directory); }
+});
+
 test('complete cached jobs stream directly with strict range and HEAD behavior', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'stremio-cache-direct-'));
   const config = configFor(directory);

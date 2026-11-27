@@ -120,6 +120,8 @@ After changing configuration or updating the code, rerun `npm ci` and `npm run i
 
 The protected dashboard shows cached files and detected addons. `downloads.json` and `sources.json` beside the private manifest provide JSON status. Install using `/<private-token>/manifest.json`. Old language-prefixed URLs are no longer supported: reinstall the addon using the plain URL. Setup removes the obsolete `language` setting from existing configuration without changing tokens or downloads.
 
+Use **Pause torrent** or **Resume torrent** on the dashboard to control background transfers. Controls apply to every selected file in the same torrent, including season packs. Pausing disconnects peers, keeps partial files and protects the torrent from automatic cache eviction; the pause survives restarts and is respected by prefetch. Fully cached files remain playable. Stop active playback before pausing, and explicitly resume before playing an incomplete file.
+
 ## Troubleshooting
 
 - **The TV cannot connect:** check the computer is awake, `baseUrl` uses its LAN address, both devices can communicate and TCP port 7810 is allowed. Guest Wi-Fi or client isolation can block access.

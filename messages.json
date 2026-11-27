@@ -8,6 +8,13 @@
   "progress": "Progress",
   "cached": "Cached",
   "downloading": "Downloading",
+  "metadata": "Fetching metadata",
+  "verifying": "Verifying cached data",
+  "paused": "Paused",
+  "pause": "Pause torrent",
+  "resume": "Resume torrent",
+  "actions": "Actions",
+  "pauseHelp": "Pause/Resume applies to every file in the torrent. Cached files remain playable. Resume incomplete files here before playing them.",
   "empty": "No downloads started yet.",
   "sources": "Detected addons",
   "documentation": "Installation guide",
@@ -44,6 +51,9 @@
     }
   },
   "errors": {
+    "torrentStopped": "The torrent was stopped before it became ready.",
+    "torrentPaused": "This torrent is paused. Resume it from the dashboard before playing an incomplete file.",
+    "torrentBusy": "This torrent is actively streaming. Stop playback before pausing it.",
     "invalidRange": "Invalid byte range.",
     "invalidSource": "Invalid source.",
     "invalidTorrent": "Invalid torrent.",
